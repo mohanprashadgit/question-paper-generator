@@ -1,0 +1,604 @@
+<?php
+require_once __DIR__ . '/db.php';
+$dbInfo = getDBInfo();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Grace College of Engineering - Question Paper Generator for 21 and 25 Regulations">
+    <title>Question Paper Generator | Grace College of Engineering</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Quill.js Rich Text Editor -->
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
+    <!-- Cropper.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR OVERLAY (Mobile)
+     ============================================================ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="App.toggleSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR NAVIGATION
+     ============================================================ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <img src="logo.png" alt="Grace College Logo">
+        <div class="sidebar-brand-text">
+            <h2>GRACE COLLEGE</h2>
+            <p>Question Paper Generator</p>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </div>
+        <div class="nav-item" data-page="create" onclick="App.navigate('create')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Create Paper
+        </div>
+        <div class="nav-item" data-page="saved" onclick="App.navigate('saved')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Saved Papers
+        </div>
+
+        <div class="nav-divider"></div>
+
+        <div class="nav-item" data-page="help" onclick="App.navigate('help')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Help
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        &copy; 2026 Grace College of Engineering
+    </div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<div class="app-layout">
+    <div class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="top-header-left">
+                <button class="hamburger-btn" onclick="App.toggleSidebar()" aria-label="Toggle menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <div class="page-title-area">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <p id="pageSubtitle">Welcome to Question Paper Generator</p>
+                </div>
+            </div>
+            <div class="top-header-right">
+                <div class="autosave-indicator" id="autosaveIndicator" style="display:none">
+                    <div class="autosave-dot"></div>
+                    <span>Auto-saved</span>
+                </div>
+                <!-- Database Environment & Status Badge -->
+                <div class="db-status-badge <?= $dbInfo['connected'] ? 'db-connected' : 'db-offline' ?>" title="<?= htmlspecialchars($dbInfo['details']) ?>">
+                    <span class="db-status-dot"></span>
+                    <span class="db-status-label"><?= htmlspecialchars($dbInfo['label']) ?></span>
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="App.navigate('help')" title="Help">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Help
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Container -->
+        <div class="page-container">
+
+            <!-- ============================================================
+                 DASHBOARD PAGE
+                 ============================================================ -->
+            <section class="page-section active" id="page-dashboard">
+                <div class="stats-grid" id="dashboardStats">
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="statTotalPapers">0</h4>
+                            <p>Total Papers</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon gold">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="statDrafts">0</h4>
+                            <p>Drafts</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                        <div class="stat-info">
+                            <h4 id="statCompleted">0</h4>
+                            <p>Completed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:24px">
+                    <div class="card-header">
+                        <h3>Quick Start</h3>
+                    </div>
+                    <div class="regulation-toggle-container">
+                        <div class="regulation-toggle">
+                            <button class="reg-toggle-btn active" data-reg="21" onclick="App.setRegulation('21')">21 REGULATION</button>
+                            <button class="reg-toggle-btn" data-reg="25" onclick="App.setRegulation('25')">25 REGULATION</button>
+                        </div>
+                    </div>
+                    <div style="text-align:center">
+                        <button class="btn btn-primary btn-lg" onclick="App.createNewPaper()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            Create New Question Paper
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Papers</h3>
+                        <button class="btn btn-sm btn-secondary" onclick="App.navigate('saved')">View All</button>
+                    </div>
+                    <div id="recentPapersList">
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            <h3>No papers yet</h3>
+                            <p>Create your first question paper to get started!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 CREATE PAPER PAGE
+                 ============================================================ -->
+            <section class="page-section" id="page-create">
+                <!-- Regulation Toggle -->
+                <div class="regulation-toggle-container">
+                    <div class="regulation-toggle">
+                        <button class="reg-toggle-btn active" data-reg="21" onclick="App.setRegulation('21')">21 REGULATION</button>
+                        <button class="reg-toggle-btn" data-reg="25" onclick="App.setRegulation('25')">25 REGULATION</button>
+                    </div>
+                </div>
+
+                <!-- Paper Details Card -->
+                <div class="card" style="margin-bottom:24px" id="paperDetailsCard">
+                    <div class="card-header">
+                        <h3>📋 Paper Details</h3>
+                        <span class="validation-badge" id="detailsValidation">
+                            <span>Fill details below</span>
+                        </span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Exam Type <span class="required">*</span></label>
+                            <select class="form-select" id="fieldExamType" onchange="App.onFieldChange()">
+                                <option value="Internal Assessment-I">Internal Assessment-I</option>
+                                <option value="Internal Assessment-II">Internal Assessment-II</option>
+                                <option value="Internal Assessment-III">Internal Assessment-III</option>
+                                <option value="Model Examination">Model Examination</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Degree <span class="required">*</span></label>
+                            <select class="form-select" id="fieldDegree" onchange="App.onDegreeChange(this.value); App.onFieldChange();">
+                                <option value="B.Tech" selected>B.Tech</option>
+                                <option value="B.E.">B.E.</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Programme <span class="required">*</span></label>
+                            <select class="form-select" id="fieldProgramme" onchange="App.onProgrammeChange(this.value); App.onFieldChange();">
+                                <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science (AI&DS)</option>
+                                <option value="Computer Science and Engineering">Computer Science and Engineering (CSE)</option>
+                                <option value="Electronics and Communication Engineering">Electronics and Communication Engineering (ECE)</option>
+                                <option value="Electrical and Electronics Engineering">Electrical and Electronics Engineering (EEE)</option>
+                                <option value="Civil Engineering">Civil Engineering (CE)</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering (ME)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Course Code <span class="required">*</span></label>
+                            <input class="form-input" id="fieldCourseCode" placeholder="e.g. AD3251" style="text-transform: uppercase" oninput="this.value = this.value.toUpperCase(); App.onFieldChange();">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Course Name <span class="required">*</span></label>
+                            <input class="form-input" id="fieldCourseName" placeholder="e.g. Data Structures and Algorithms" oninput="App.onFieldChange()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Year</label>
+                            <select class="form-select" id="fieldYear" onchange="App.onFieldChange()">
+                                <option value="">Select Year</option>
+                                <option value="I">I</option>
+                                <option value="II">II</option>
+                                <option value="III">III</option>
+                                <option value="IV">IV</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Semester</label>
+                            <select class="form-select" id="fieldSemester" onchange="App.onFieldChange()">
+                                <option value="">Select Semester</option>
+                                <option value="I">I</option>
+                                <option value="II">II</option>
+                                <option value="III">III</option>
+                                <option value="IV">IV</option>
+                                <option value="V">V</option>
+                                <option value="VI">VI</option>
+                                <option value="VII">VII</option>
+                                <option value="VIII">VIII</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input class="form-input" type="date" id="fieldDate" onchange="App.onFieldChange()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration</label>
+                            <input class="form-input" id="fieldDuration" value="1 1/2 hrs" placeholder="e.g. 1 1/2 hrs" oninput="App.onFieldChange()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Page Split Layout: Editor + Preview -->
+                <div class="create-split-layout">
+                    <!-- Left: Editor Column -->
+                    <div class="editor-column" id="editorColumn">
+                        <!-- Question Builder Sections -->
+                        <div id="questionSections">
+                            <!-- Dynamically populated by regulation template -->
+                        </div>
+
+                        <!-- Global Validation Summary -->
+                        <div class="card" style="margin-top:24px" id="validationSummaryCard">
+                            <div class="card-header">
+                                <h3>📊 Validation Summary</h3>
+                                <span class="validation-badge" id="globalValidation">
+                                    ⏳ Incomplete
+                                </span>
+                            </div>
+                            <div id="validationDetails"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="btn-group" style="margin-top:24px; justify-content: center;">
+                            <button class="btn btn-primary btn-lg" onclick="PDFGenerator.generatePDF()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download PDF
+                            </button>
+                            <button class="btn btn-secondary btn-lg" onclick="App.printPaper()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                Print
+                            </button>
+                            <button class="btn btn-success btn-lg" onclick="App.savePaper()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                Save Paper
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live Preview Panel (sticky) -->
+                    <div class="preview-column" id="previewColumn">
+                        <div class="preview-panel-header">
+                            <h3>👁️ Live Preview</h3>
+                            <button class="btn btn-sm btn-outline" onclick="App.togglePreviewPanel()" title="Close Preview">
+                                ✕
+                            </button>
+                        </div>
+                        <div class="preview-wrapper" id="previewWrapper">
+                            <div class="a4-page" id="a4Preview">
+                                <!-- Dynamically populated by preview.js -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 SAVED PAPERS PAGE
+                 ============================================================ -->
+            <!-- ============================================================
+                 SAVED PAPERS PAGE
+                 ============================================================ -->
+            <section class="page-section" id="page-saved">
+                <div class="card">
+                    <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h3>💾 Saved Papers</h3>
+                            <span class="badge" id="savedPapersCountBadge" style="background:#e0e7ff; color:#4338ca; font-weight:600; padding:4px 10px; border-radius:12px; font-size:12px;">0 papers</span>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <!-- Bulk action buttons -->
+                            <button class="btn btn-sm btn-secondary" onclick="Storage.bulkPrint()" title="Print Selected Papers (or all filtered)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                Bulk Print
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="Storage.bulkExportPDF()" title="Export PDF for Selected Papers (or all filtered)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Bulk Export PDF
+                            </button>
+                            <button class="btn btn-sm btn-danger" id="bulkDeleteBtn" onclick="Storage.bulkDelete()" style="display:none;" title="Delete Selected Papers">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Delete (<span id="selectedCount">0</span>)
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="App.createNewPaper()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                                New Paper
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fast Comprehensive Filters Bar -->
+                    <div class="filters-bar" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                        <input class="filter-input" type="text" placeholder="🔍 Search code, subject, etc..." id="savedSearchInput" style="flex: 1.5; min-width: 180px;" oninput="Storage.filterPapers()">
+                        
+                        <select class="filter-input" id="savedFilterDept" style="flex: 1.2; min-width: 140px;" onchange="Storage.filterPapers()">
+                            <option value="">All Departments</option>
+                            <option value="Artificial Intelligence and Data Science">AI & DS</option>
+                            <option value="Computer Science and Engineering">CSE</option>
+                            <option value="Electronics and Communication Engineering">ECE</option>
+                            <option value="Electrical and Electronics Engineering">EEE</option>
+                            <option value="Civil Engineering">Civil (CE)</option>
+                            <option value="Mechanical Engineering">Mech (ME)</option>
+                        </select>
+
+                        <select class="filter-input" id="savedFilterYear" style="flex: 0.8; min-width: 100px;" onchange="Storage.filterPapers()">
+                            <option value="">All Years</option>
+                            <option value="I">Year I</option>
+                            <option value="II">Year II</option>
+                            <option value="III">Year III</option>
+                            <option value="IV">Year IV</option>
+                        </select>
+
+                        <select class="filter-input" id="savedFilterReg" style="flex: 0.8; min-width: 110px;" onchange="Storage.filterPapers()">
+                            <option value="">All Regs</option>
+                            <option value="21">21 Reg</option>
+                            <option value="25">25 Reg</option>
+                        </select>
+
+                        <select class="filter-input" id="savedFilterStatus" style="flex: 0.8; min-width: 110px;" onchange="Storage.filterPapers()">
+                            <option value="">All Statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="completed">Completed</option>
+                            <option value="exported">Exported</option>
+                        </select>
+
+                        <button class="btn btn-sm btn-outline" onclick="Storage.resetFilters()" title="Reset Filters" style="height:38px;">
+                            Reset
+                        </button>
+                    </div>
+
+                    <div id="savedPapersList">
+                        <div class="empty-state">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            <h3>No saved papers</h3>
+                            <p>Your saved papers will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 HELP PAGE
+                 ============================================================ -->
+            <section class="page-section" id="page-help">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>❓ How to Use</h3>
+                    </div>
+                    <div class="help-steps">
+                        <div class="help-step">
+                            <div>
+                                <h4>Select Regulation</h4>
+                                <p>Choose between 21 Regulation or 25 Regulation using the toggle at the top. Each regulation has a different question paper structure.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Enter Paper Details</h4>
+                                <p>Fill in the exam type, course code, course name, year, semester, date, and duration. Maximum marks are set automatically from the regulation.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Add Questions</h4>
+                                <p>Each section (Part A, B, C) has pre-defined question slots. Type your question text in each slot. Use the rich text editor for formatting.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Set CO (Course Outcome)</h4>
+                                <p>Select the Course Outcome (CO1–CO6) for each question from the dropdown. This maps which course outcome the question assesses.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Set Unit</h4>
+                                <p>Select which unit (Unit 1–6) the question belongs to. This is used for internal tracking and analysis.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Set K-Level (Bloom's Taxonomy)</h4>
+                                <p><strong>K1</strong> – Remember, <strong>K2</strong> – Understand, <strong>K3</strong> – Apply, <strong>K4</strong> – Analyze, <strong>K5</strong> – Evaluate, <strong>K6</strong> – Create. The system automatically combines CO and K-Level (e.g., CO1-K3).</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Add Images (Optional)</h4>
+                                <p>Click "+ Add Image" on any question to upload a diagram or figure. You can crop, resize, rotate, and set alignment.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Check Analysis</h4>
+                                <p>Go to the Analysis page to see automatic Competency Level Analysis and CO Analysis tables with charts. Everything is calculated from your questions.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Preview Paper</h4>
+                                <p>The Preview page shows your question paper exactly as it will appear in the PDF — with college header, tables, analysis, and footer.</p>
+                            </div>
+                        </div>
+                        <div class="help-step">
+                            <div>
+                                <h4>Generate PDF</h4>
+                                <p>Click "Download PDF" to generate a professional A4 PDF ready for printing. You can also use the browser's Print function.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:24px">
+                    <div class="card-header">
+                        <h3>📖 Glossary</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px;">
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>CO (Course Outcome)</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Defines what a student should be able to do after completing the course. CO1–CO6 are different outcomes.</p>
+                        </div>
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>K-Level (Bloom's Taxonomy)</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">K1=Remember, K2=Understand, K3=Apply, K4=Analyze, K5=Evaluate, K6=Create. Measures cognitive complexity.</p>
+                        </div>
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>CO-K Level</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Combined notation (e.g., CO1-K3) showing both the course outcome and Bloom's level for a question.</p>
+                        </div>
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>OR Question</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Two alternative questions where the student answers only one. Labeled (a) and (b) with "OR" separator.</p>
+                        </div>
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>Competency Analysis</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Auto-generated table showing K-level distribution of questions with marks and percentage contribution.</p>
+                        </div>
+                        <div style="padding:12px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 3px solid var(--primary);">
+                            <strong>Unit</strong>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">The syllabus unit (1–6) from which the question is drawn. Used for internal coverage analysis.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div><!-- /page-container -->
+    </div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<!-- ============================================================
+     BOTTOM NAVIGATION (Mobile)
+     ============================================================ -->
+<nav class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-items">
+        <button class="bottom-nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Home</span>
+        </button>
+        <button class="bottom-nav-item" data-page="create" onclick="App.navigate('create')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Create</span>
+        </button>
+        <button class="bottom-nav-item" data-page="saved" onclick="App.navigate('saved')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Saved</span>
+        </button>
+    </div>
+</nav>
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- Image Cropper Modal -->
+<div class="modal-overlay" id="cropperModal">
+    <div class="modal" style="max-width:700px">
+        <div class="modal-header">
+            <h3>✂️ Edit Image</h3>
+            <button class="modal-close" onclick="QuestionBuilder.closeCropper()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body cropper-modal-body">
+            <img id="cropperImage" src="" alt="Crop">
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="QuestionBuilder.rotateCrop(-90)">↺ Rotate</button>
+            <button class="btn btn-outline" onclick="QuestionBuilder.rotateCrop(90)">↻ Rotate</button>
+            <button class="btn btn-secondary" onclick="QuestionBuilder.closeCropper()">Cancel</button>
+            <button class="btn btn-primary" onclick="QuestionBuilder.applyCrop()">Apply Crop</button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Preview Toggle Button (visible on Create page) -->
+<button class="preview-fab" id="previewFab" onclick="App.togglePreviewPanel()" title="Toggle Live Preview" style="display:none">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+</button>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+     SCRIPTS
+     ============================================================ -->
+<!-- Quill.js -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Cropper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<!-- SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+    if (typeof window !== 'undefined' && window.jspdf && window.jspdf.jsPDF) {
+        window.jsPDF = window.jspdf.jsPDF;
+    }
+</script>
+<!-- jsPDF AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<!-- html2pdf.js (seamless fallback) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- App Modules -->
+<script src="assets/js/regulation21.js"></script>
+<script src="assets/js/regulation25.js"></script>
+<script src="assets/js/storage.js"></script>
+<script src="assets/js/validation.js"></script>
+<script src="assets/js/analysis.js"></script>
+<script src="assets/js/question-builder.js"></script>
+<script src="assets/js/preview.js"></script>
+<script src="assets/js/pdf-generator.js"></script>
+<script src="assets/js/help.js"></script>
+<script src="assets/js/app.js"></script>
+<!-- Dedicated Print Container (rendered during print) -->
+<div id="printArea"></div>
+
+</body>
+</html>
