@@ -150,6 +150,7 @@ question_paper_setting/
 
 * **Developed by:**
   * **R. Mohanprashad** — *Developer & Lead Contributor*
+* **M.Harish Kumar** — *Developer * 
 
 * **Under the Guidance of:**
   * **Mr. P. A. Sathish Kumar**, M.E., (Ph.D.) — *Assistant Professor, Department of Artificial Intelligence and Data Science (AI & DS)*
