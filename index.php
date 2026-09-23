@@ -55,6 +55,10 @@ $dbInfo = getDBInfo();
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Saved Papers
         </div>
+        <div class="nav-item" data-page="settings" onclick="App.navigate('settings')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Regulations & Settings
+        </div>
 
         <div class="nav-divider"></div>
 
@@ -506,6 +510,66 @@ $dbInfo = getDBInfo();
                 </div>
             </section>
 
+            <!-- ============================================================
+                 SETTINGS & REGULATION MANAGER PAGE
+                 ============================================================ -->
+            <section class="page-section" id="page-settings">
+                <!-- Active Regulations Card -->
+                <div class="card" style="margin-bottom:24px;">
+                    <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h3>⚙️ Regulation Templates Manager</h3>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-top:2px;">
+                                Configure examination question paper formats, question counts, marks, MCQs, and internal choices.
+                            </p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="App.openRegulationModal()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            + Add New Regulation
+                        </button>
+                    </div>
+
+                    <div id="settingsRegulationsList" style="margin-top:16px;">
+                        <!-- Dynamically populated with active regulations -->
+                    </div>
+                </div>
+
+                <!-- Backup & Storage Management Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>💾 Backup, Restore & Data Storage</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:12px;">
+                        <div style="padding:16px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 4px solid var(--primary);">
+                            <h4 style="margin-bottom:6px; color:var(--text);">📦 Export Full Backup</h4>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Download all saved question papers, custom regulations, and settings as a JSON file.</p>
+                            <button class="btn btn-outline btn-sm" onclick="Storage.exportAllData()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Export Backup JSON
+                            </button>
+                        </div>
+
+                        <div style="padding:16px; background:var(--primary-lightest); border-radius:var(--radius); border-left: 4px solid var(--secondary);">
+                            <h4 style="margin-bottom:6px; color:var(--text);">📥 Import Data</h4>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Restore question papers and regulations from a previously exported JSON backup file.</p>
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Choose Backup File
+                                <input type="file" accept=".json" style="display:none" onchange="Storage.importData(event)">
+                            </label>
+                        </div>
+
+                        <div style="padding:16px; background:#fff1f2; border-radius:var(--radius); border-left: 4px solid var(--danger);">
+                            <h4 style="margin-bottom:6px; color:var(--danger);">⚠️ Reset Local Data</h4>
+                            <p style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Erase saved papers and local cache from this browser.</p>
+                            <button class="btn btn-danger btn-sm" onclick="Storage.clearAllData()">
+                                Clear All Local Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div><!-- /page-container -->
     </div><!-- /main-content -->
 </div><!-- /app-layout -->
@@ -527,12 +591,78 @@ $dbInfo = getDBInfo();
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             <span>Saved</span>
         </button>
+        <button class="bottom-nav-item" data-page="settings" onclick="App.navigate('settings')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            <span>Settings</span>
+        </button>
     </div>
 </nav>
 
 <!-- ============================================================
      MODALS
      ============================================================ -->
+
+<!-- Regulation Builder Modal -->
+<div class="modal-overlay" id="regulationModal">
+    <div class="modal" style="max-width:850px; width:95%; max-height:90vh; overflow-y:auto;">
+        <div class="modal-header">
+            <h3 id="regModalTitle">🛠️ Configure Regulation Template</h3>
+            <button class="modal-close" onclick="App.closeRegulationModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="modal-body" style="padding:20px;">
+            <!-- Basic info grid -->
+            <div class="form-grid" style="margin-bottom:20px;">
+                <div class="form-group">
+                    <label class="form-label">Regulation Display Name <span class="required">*</span></label>
+                    <input class="form-input" id="modalRegName" placeholder="e.g. 26 Regulation" oninput="App.onModalNameChange()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Regulation Code <span class="required">*</span></label>
+                    <input class="form-input" id="modalRegCode" placeholder="e.g. 26" style="text-transform:uppercase" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Total Exam Marks <span class="required">*</span></label>
+                    <input class="form-input" type="number" id="modalRegTotalMarks" value="50" min="10" max="200" oninput="App.recalcModalMarks()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Units Available</label>
+                    <input class="form-input" type="number" id="modalRegMaxUnits" value="5" min="1" max="15">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Course Outcomes (COs)</label>
+                    <input class="form-input" type="number" id="modalRegMaxCO" value="5" min="1" max="15">
+                </div>
+            </div>
+
+            <!-- Sections builder -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h4 style="color:var(--text); font-size:15px; font-weight:700;">Sections / Parts Configuration</h4>
+                <button type="button" class="btn btn-outline btn-sm" onclick="App.addSectionRow()">
+                    + Add Part Section
+                </button>
+            </div>
+
+            <div id="modalSectionsContainer" style="display:flex; flex-direction:column; gap:14px;">
+                <!-- Dynamically populated section rows -->
+            </div>
+
+            <div class="reg-marks-summary-bar" id="modalMarksSummary" style="margin-top:16px; padding:14px; background:var(--bg); border-radius:var(--radius); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; font-weight:600;">
+                <div>
+                    <span>📝 Total Questions: <span id="modalCalculatedQuestions" style="color:var(--primary); font-size:16px; font-weight:700;">0</span> Questions <span id="modalOverallRange" style="color:var(--text-secondary); font-size:13px; font-weight:500;">(Q1 to Q0)</span></span>
+                </div>
+                <div>
+                    <span>🎯 Total Marks: <span id="modalCalculatedMarks" style="color:var(--primary); font-size:16px; font-weight:700;">0</span> / <span id="modalTargetMarksDisplay">50</span> Marks</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="App.closeRegulationModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="App.saveRegulationFromModal()">Save Regulation Template</button>
+        </div>
+    </div>
+</div>
 
 <!-- Image Cropper Modal -->
 <div class="modal-overlay" id="cropperModal">

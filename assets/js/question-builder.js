@@ -13,7 +13,7 @@ const QuestionBuilder = {
      * Initialize question sections from regulation template
      */
     init(regulation) {
-        const template = regulation === '25' ? REGULATION_25 : REGULATION_21;
+        const template = (typeof App !== 'undefined' && App.getTemplate) ? App.getTemplate(regulation) : (regulation === '25' ? REGULATION_25 : REGULATION_21);
         const container = document.getElementById('questionSections');
         if (!container) return;
 
@@ -47,11 +47,17 @@ const QuestionBuilder = {
      */
     renderSection(section, template) {
         const questions = App.state.questions.filter(q => q.part === section.part && !q.parent_id);
+        const startQ = questions.length > 0 ? questions[0].question_number : (template.questionNumbering?.[section.part]?.start || 1);
+        const endQ = questions.length > 0 ? questions[questions.length - 1].question_number : (startQ + section.questionsCount - 1);
+        const rangeText = questions.length <= 1 ? `Q${startQ}` : `Q${startQ} – Q${endQ}`;
 
         return `
             <div class="section-container" id="section-${section.part}">
                 <div class="section-header">
-                    <h3>${section.title} ${section.subtitle}</h3>
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <h3>${section.title} ${section.subtitle}</h3>
+                        <span class="q-range-pill">${rangeText} • ${questions.length} Qs</span>
+                    </div>
                     <span class="section-marks" id="sectionMarks-${section.part}">
                         0 / ${section.totalMarks} marks
                     </span>
@@ -61,8 +67,11 @@ const QuestionBuilder = {
                 </div>
                 <div class="section-footer">
                     <span class="validation-badge" id="sectionValid-${section.part}">
-                        ${questions.length}/${section.questionsCount} questions
+                        ${questions.length}/${section.questionsCount} questions (${rangeText})
                     </span>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="QuestionBuilder.addQuestion('${section.part}', ${section.allowOR})">
+                        + Add Q in Part ${section.part}
+                    </button>
                 </div>
             </div>`;
     },
@@ -74,13 +83,13 @@ const QuestionBuilder = {
         const coK = `${q.co || 'CO1'}-${q.k_level || 'K1'}`;
         const hasOR = q.children && q.children.some(c => c.or_group);
         const hasSub = q.children && q.children.some(c => c.sub_number);
-        const is25 = App.state.regulation === '25';
+        const isMCQ = q.question_type === 'mcq';
 
         let cardHtml = `
             <div class="question-card" id="qcard-${q.id}" data-id="${q.id}">
                 <div class="question-card-header">
                     <span class="q-number">${q.question_number}</span>
-                    ${is25 && q.question_type === 'mcq' ? '<span class="q-type-badge mcq">MCQ</span>' : ''}
+                    ${isMCQ ? '<span class="q-type-badge mcq">MCQ</span>' : ''}
                     <span class="co-k-display">${coK}</span>
                 </div>
                 <div class="question-card-body">`;
@@ -136,25 +145,26 @@ const QuestionBuilder = {
      */
     renderQuestionFields(q, isSub = false) {
         const prefix = isSub ? `(${q.sub_number}) ` : '';
-        const is25 = App.state.regulation === '25';
+        const reg = App.state.regulation || '21';
+        const template = (typeof App !== 'undefined' && App.getTemplate) ? App.getTemplate(reg) : (reg === '25' ? REGULATION_25 : REGULATION_21);
+        const maxCO = template.maxCO || (reg === '25' ? 7 : 5);
+        const maxUnit = template.maxUnits || (reg === '25' ? 7 : 5);
 
-        // Regulation-specific CO options: Reg 21 → CO1-CO5, Reg 25 → CO1-CO7
-        const maxCO = is25 ? 7 : 5;
+        // Regulation-specific CO options
         const coList = [];
         for (let i = 1; i <= maxCO; i++) coList.push('CO' + i);
         const coOptions = coList.map(co =>
             `<option value="${co}" ${q.co === co ? 'selected' : ''}>${co}</option>`
         ).join('');
 
-        // Regulation-specific Unit options: Reg 21 → Unit 1-5, Reg 25 → Unit 1-7 + Other
-        const maxUnit = is25 ? 7 : 5;
+        // Regulation-specific Unit options
         let unitOptions = '';
         for (let u = 1; u <= maxUnit; u++) {
             unitOptions += `<option value="Unit ${u}" ${q.unit === 'Unit ' + u ? 'selected' : ''}>Unit ${u}</option>`;
         }
-        if (is25) {
+        if (maxUnit > 5 || reg === '25') {
             // "Other" option: selected when unit doesn't match any standard option
-            const isOther = q.unit && !q.unit.match(/^Unit [1-7]$/);
+            const isOther = q.unit && !q.unit.match(new RegExp(`^Unit [1-${maxUnit}]$`));
             unitOptions += `<option value="Other" ${isOther ? 'selected' : ''}>Other</option>`;
         }
 
@@ -163,15 +173,12 @@ const QuestionBuilder = {
             return `<option value="${k}" ${q.k_level === k ? 'selected' : ''}>${k} – ${labels[k]}</option>`;
         }).join('');
 
-        // Question types:
-        // For 2021: only descriptive (no type selector)
-        // For 2025: only show type selector in Part A where MCQ and Descriptive are allowed
-        const template = App.getTemplate();
+        // Question types: show type selector if section allows MCQ or descriptive
         const section = template.sections.find(s => s.part === q.part);
-        const showTypeSelector = is25 && section && section.part === 'A';
+        const showTypeSelector = section && (section.allowMCQ || (reg === '25' && section.part === 'A'));
 
-        // For Reg 25 "Other" unit: show a number input for custom unit
-        const isOtherUnit = is25 && q.unit && !q.unit.match(/^Unit [1-7]$/);
+        // "Other" unit: show a number input for custom unit
+        const isOtherUnit = (maxUnit > 5 || reg === '25') && q.unit && !q.unit.match(new RegExp(`^Unit [1-${maxUnit}]$`));
         const otherUnitNum = isOtherUnit ? q.unit.replace(/[^0-9]/g, '') : '';
 
         let html = `
@@ -181,7 +188,7 @@ const QuestionBuilder = {
                     <label class="form-label">Type</label>
                     <select class="form-select" onchange="QuestionBuilder.updateField('${q.id}','question_type',this.value)">
                         <option value="mcq" ${q.question_type === 'mcq' ? 'selected' : ''}>MCQ</option>
-                        <option value="descriptive" ${q.question_type === 'descriptive' ? 'selected' : ''}>Descriptive</option>
+                        <option value="descriptive" ${q.question_type === 'descriptive' || q.question_type === 'short' || q.question_type === 'long' ? 'selected' : ''}>Descriptive</option>
                     </select>
                 </div>` : ''}
                 <div class="form-group">
@@ -358,10 +365,12 @@ const QuestionBuilder = {
             q.unit = value;
         }
 
-        // Auto-map CO for Reg 25: Unit N → CON
-        if (App.state.regulation === '25' && value !== 'Other') {
+        // Auto-map CO: Unit N → CON (for Regulations with matching units and COs)
+        const template = App.getTemplate();
+        const maxCO = template.maxCO || 5;
+        if (value !== 'Other') {
             const unitNum = parseInt(value.replace(/[^0-9]/g, ''), 10);
-            if (unitNum >= 1 && unitNum <= 7) {
+            if (unitNum >= 1 && unitNum <= maxCO) {
                 q.co = 'CO' + unitNum;
             }
         }
@@ -413,15 +422,17 @@ const QuestionBuilder = {
         if (!section) return;
 
         const sectionQs = App.state.questions.filter(q => q.part === part && !q.parent_id);
-        const nextNum = template.questionNumbering[part].start + sectionQs.length;
+        const startNum = (template.questionNumbering && template.questionNumbering[part]) ? template.questionNumbering[part].start : (sectionQs.length + 1);
+        const nextNum = startNum + sectionQs.length;
         const id = 'q_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        const isMCQ = section.allowMCQ || (part === 'A' && App.state.regulation === '25');
 
         const newQ = {
             id,
             part,
             question_number: nextNum,
             question_text: '',
-            question_type: part === 'A' ? (App.state.regulation === '25' ? 'mcq' : 'short') : 'long',
+            question_type: isMCQ ? 'mcq' : (section.marksEach <= 2 ? 'short' : 'long'),
             marks: section.marksEach,
             co: 'CO1',
             unit: 'Unit 1',
@@ -435,7 +446,7 @@ const QuestionBuilder = {
             or_group: null,
             sub_number: null,
             sort_order: nextNum,
-            mcq_options: (part === 'A' && App.state.regulation === '25') ? [{label:'A',text:''},{label:'B',text:''},{label:'C',text:''},{label:'D',text:''}] : null,
+            mcq_options: isMCQ ? [{label:'A',text:''},{label:'B',text:''},{label:'C',text:''},{label:'D',text:''}] : null,
             children: []
         };
 
@@ -589,13 +600,13 @@ const QuestionBuilder = {
      */
     renumberQuestions() {
         const template = App.getTemplate();
+        let currentQ = 1;
+
         template.sections.forEach(section => {
             const sectionQs = App.state.questions.filter(q => q.part === section.part && !q.parent_id);
             sectionQs.forEach((q, idx) => {
-                q.question_number = section.questionsCount <= (idx + 1)
-                    ? template.questionNumbering[section.part].start + idx
-                    : template.questionNumbering[section.part].start + idx;
-                q.sort_order = template.questionNumbering[section.part].start + idx;
+                q.question_number = currentQ++;
+                q.sort_order = q.question_number;
                 // Update children
                 if (q.children) {
                     q.children.forEach(c => { c.question_number = q.question_number; });

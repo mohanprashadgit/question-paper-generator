@@ -176,7 +176,7 @@ const Analysis = {
     render(paperData) {
         const questions = paperData.questions || [];
         const regulation = paperData.regulation || '21';
-        const template = regulation === '25' ? REGULATION_25 : REGULATION_21;
+        const template = (typeof App !== 'undefined' && App.getTemplate) ? App.getTemplate(regulation) : (regulation === '25' ? REGULATION_25 : REGULATION_21);
         const analysis = this.compute(questions);
 
         this.renderStats(analysis, template);

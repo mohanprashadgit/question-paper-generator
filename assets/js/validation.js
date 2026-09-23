@@ -10,7 +10,7 @@ const Validation = {
     validate(paperData, regulation) {
         const errors = [];
         const warnings = [];
-        const template = regulation === '25' ? REGULATION_25 : REGULATION_21;
+        const template = (typeof App !== 'undefined' && App.getTemplate) ? App.getTemplate(regulation) : (regulation === '25' ? REGULATION_25 : REGULATION_21);
 
         // 1. Paper details validation
         if (!paperData.course_code) errors.push({ field: 'course_code', message: 'Course Code is required', section: 'details' });

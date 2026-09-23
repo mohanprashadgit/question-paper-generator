@@ -15,7 +15,7 @@ const PDFGenerator = {
 
         const paperData = paperDataOverride || (typeof App !== 'undefined' ? App.getCurrentPaperData() : {});
         const regulation = paperData.regulation || '21';
-        const template = regulation === '25' ? REGULATION_25 : REGULATION_21;
+        const template = (typeof App !== 'undefined' && App.getTemplate) ? App.getTemplate(regulation) : (regulation === '25' ? REGULATION_25 : REGULATION_21);
         const questions = (paperData.questions && paperData.questions.length > 0)
             ? paperData.questions
             : (typeof App !== 'undefined' ? App.state.questions : []);

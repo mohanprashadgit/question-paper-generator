@@ -152,11 +152,48 @@ const Storage = {
     },
 
     // =============================================
+    // Custom Regulations CRUD
+    // =============================================
+    getCustomRegulations() {
+        return this.load('custom_regulations') || [];
+    },
+
+    getCustomRegulation(code) {
+        const list = this.getCustomRegulations();
+        return list.find(r => String(r.code) === String(code)) || null;
+    },
+
+    saveCustomRegulation(regData) {
+        if (!regData || !regData.code) return false;
+        const list = this.getCustomRegulations();
+        const existingIdx = list.findIndex(r => String(r.code) === String(regData.code));
+        regData.updated_at = new Date().toISOString();
+
+        if (existingIdx >= 0) {
+            list[existingIdx] = regData;
+        } else {
+            regData.created_at = new Date().toISOString();
+            list.push(regData);
+        }
+
+        this.save('custom_regulations', list);
+        return true;
+    },
+
+    deleteCustomRegulation(code) {
+        const list = this.getCustomRegulations();
+        const filtered = list.filter(r => String(r.code) !== String(code));
+        this.save('custom_regulations', filtered);
+        return true;
+    },
+
+    // =============================================
     // Export/Import
     // =============================================
     exportAllData() {
         const data = {
             papers: this.getAllPapers(),
+            custom_regulations: this.getCustomRegulations(),
             question_bank: this.getQuestionBank(),
             settings: this.getSettings(),
             exported_at: new Date().toISOString()
@@ -184,6 +221,7 @@ const Storage = {
             try {
                 const data = JSON.parse(e.target.result);
                 if (data.papers) this.save('papers', data.papers);
+                if (data.custom_regulations) this.save('custom_regulations', data.custom_regulations);
                 if (data.question_bank) this.save('question_bank', data.question_bank);
                 if (data.settings) this.save('settings', data.settings);
                 App.showToast('Data imported successfully!', 'success');
