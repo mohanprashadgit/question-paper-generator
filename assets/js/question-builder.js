@@ -237,22 +237,30 @@ const QuestionBuilder = {
 
         // Image upload
         const hasImage = q.image_path && q.image_path.trim() !== '';
+        const imgSizePreset = q.image_size || 'medium';
+        const imgAlign = q.image_alignment || 'center';
+        // Compute image max-width: use custom width if set, otherwise use preset
+        let imgMaxWidth;
+        if (imgSizePreset === 'custom' && q.image_width) {
+            imgMaxWidth = q.image_width + 'px';
+        } else {
+            imgMaxWidth = imgSizePreset === 'small' ? '200px' : imgSizePreset === 'large' ? '500px' : '350px';
+        }
+        const currentWidthVal = q.image_width || (imgSizePreset === 'small' ? 200 : imgSizePreset === 'large' ? 500 : 350);
         html += `
             <div class="image-upload-area ${hasImage ? 'has-image' : ''}" id="imgArea-${q.id}">
                 ${hasImage ? `
-                    <div class="image-preview-container">
-                        <img src="${q.image_path}" alt="Question image" style="text-align:${q.image_alignment || 'center'}; max-width:${q.image_size === 'small' ? '200px' : q.image_size === 'large' ? '500px' : '350px'};">
+                    <div class="image-preview-container" style="text-align:${imgAlign};">
+                        <div class="image-resizable-wrapper" style="display:inline-block; position:relative;">
+                            <img src="${q.image_path}" alt="Question image" style="max-width:${imgMaxWidth}; height:auto; display:block;">
+                            <div class="image-resize-handle" data-qid="${q.id}" title="Drag to resize">&#8600;</div>
+                        </div>
                     </div>
                     <div class="image-controls">
-                        <select class="form-select" style="width:auto; padding:4px 8px; font-size:12px;" onchange="QuestionBuilder.updateField('${q.id}','image_alignment',this.value)">
-                            <option value="left" ${q.image_alignment==='left'?'selected':''}>Left</option>
-                            <option value="center" ${q.image_alignment==='center'?'selected':''}>Center</option>
-                            <option value="right" ${q.image_alignment==='right'?'selected':''}>Right</option>
-                        </select>
-                        <select class="form-select" style="width:auto; padding:4px 8px; font-size:12px;" onchange="QuestionBuilder.updateField('${q.id}','image_size',this.value)">
-                            <option value="small" ${q.image_size==='small'?'selected':''}>Small</option>
-                            <option value="medium" ${q.image_size==='medium'?'selected':''}>Medium</option>
-                            <option value="large" ${q.image_size==='large'?'selected':''}>Large</option>
+                        <select class="form-select" style="width:auto; padding:4px 8px; font-size:12px;" onchange="QuestionBuilder.updateImageField('${q.id}','image_alignment',this.value)">
+                            <option value="left" ${imgAlign==='left'?'selected':''}>⬅ Left</option>
+                            <option value="center" ${imgAlign==='center'?'selected':''}>⬛ Center</option>
+                            <option value="right" ${imgAlign==='right'?'selected':''}>➡ Right</option>
                         </select>
                         <button class="btn btn-sm btn-outline" onclick="QuestionBuilder.editImage('${q.id}')">✂️ Crop</button>
                         <button class="btn btn-sm btn-danger" onclick="QuestionBuilder.removeImage('${q.id}')">Remove</button>
@@ -313,6 +321,9 @@ const QuestionBuilder = {
                 area.onclick = () => input.click();
             }
         });
+
+        // Initialize drag-to-resize handles for images
+        this.initImageResizeHandles();
     },
 
     /**
@@ -327,6 +338,60 @@ const QuestionBuilder = {
             }
         });
         return flat;
+    },
+
+    /**
+     * Initialize drag-to-resize handles on images
+     */
+    initImageResizeHandles() {
+        document.querySelectorAll('.image-resize-handle').forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const qid = handle.getAttribute('data-qid');
+                const wrapper = handle.closest('.image-resizable-wrapper');
+                const img = wrapper ? wrapper.querySelector('img') : null;
+                if (!img) return;
+
+                const startX = e.clientX;
+                const startWidth = img.getBoundingClientRect().width;
+
+                const onMouseMove = (moveEvt) => {
+                    const deltaX = moveEvt.clientX - startX;
+                    const newWidth = Math.max(50, Math.min(800, Math.round(startWidth + deltaX)));
+                    img.style.maxWidth = newWidth + 'px';
+                    // Update slider/number if visible
+                    const area = document.getElementById(`imgArea-${qid}`);
+                    if (area) {
+                        const slider = area.querySelector('.image-width-slider');
+                        const numInput = area.querySelector('.image-custom-size-control input[type="number"]');
+                        if (slider) slider.value = newWidth;
+                        if (numInput) numInput.value = newWidth;
+                    }
+                };
+
+                const onMouseUp = (upEvt) => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    // Save final width
+                    const finalWidth = Math.max(50, Math.min(800, Math.round(img.getBoundingClientRect().width)));
+                    const q = this.findQuestion(qid);
+                    if (q) {
+                        q.image_width = finalWidth;
+                        q.image_size = 'custom';
+                        this.refreshCards();
+                        App.onQuestionChange();
+                    }
+                };
+
+                document.body.style.cursor = 'nwse-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+        });
     },
 
     /**
@@ -349,6 +414,54 @@ const QuestionBuilder = {
                 this.refreshCards();
             }
         }
+    },
+
+    /**
+     * Update image-specific field and refresh the image display
+     */
+    updateImageField(id, field, value) {
+        const q = this.findQuestion(id);
+        if (q) {
+            // Save previous size before overwriting
+            const prevSize = q.image_size || 'medium';
+            q[field] = value;
+            // When switching to 'custom' size, initialize width from previous preset
+            if (field === 'image_size' && value === 'custom' && !q.image_width) {
+                q.image_width = prevSize === 'small' ? 200 : prevSize === 'large' ? 500 : 350;
+            }
+            // When switching away from 'custom', clear custom width
+            if (field === 'image_size' && value !== 'custom') {
+                q.image_width = null;
+            }
+            this.refreshCards();
+            App.onQuestionChange();
+        }
+    },
+
+    /**
+     * Update custom image width (from slider or number input)
+     */
+    updateImageWidth(id, value) {
+        const q = this.findQuestion(id);
+        if (!q) return;
+        const w = Math.max(50, Math.min(800, parseInt(value, 10) || 200));
+        q.image_width = w;
+        q.image_size = 'custom';
+        // Update the slider and number input in-place without full re-render
+        const area = document.getElementById(`imgArea-${id}`);
+        if (area) {
+            const slider = area.querySelector('.image-width-slider');
+            const numInput = area.querySelector('.image-custom-size-control input[type="number"]');
+            const wrapper = area.querySelector('.image-resizable-wrapper');
+            if (slider && slider !== document.activeElement) slider.value = w;
+            if (numInput && numInput !== document.activeElement) numInput.value = w;
+            if (wrapper) {
+                const img = wrapper.querySelector('img');
+                if (img) img.style.maxWidth = w + 'px';
+            }
+        }
+        App.triggerAutoSave();
+        App.updatePreview();
     },
 
     /**

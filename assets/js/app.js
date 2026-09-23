@@ -1365,7 +1365,10 @@ const App = {
     },
 
     createNewPaper() {
+        // Fully reset all state to fresh defaults
         this.state.id = null;
+        this.state.regulation = '21';
+        this.state.exam_type = 'Internal Assessment-I';
         this.state.degree = 'B.Tech';
         this.state.programme = 'Artificial Intelligence and Data Science';
         this.state.course_code = '';
@@ -1374,6 +1377,7 @@ const App = {
         this.state.semester = '';
         this.state.exam_date = '';
         this.state.duration = '1 1/2 hrs';
+        this.state.max_marks = 50;
         this.state.status = 'draft';
         this.state.created_at = null;
         this.state.updated_at = null;

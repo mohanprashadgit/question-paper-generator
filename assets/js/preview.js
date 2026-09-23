@@ -190,9 +190,14 @@ const Preview = {
 
     renderImageInTable(q) {
         if (!q.image_path) return '';
-        const maxW = q.image_size === 'small' ? '120px' : q.image_size === 'large' ? '300px' : '200px';
+        let maxW;
+        if (q.image_size === 'custom' && q.image_width) {
+            maxW = q.image_width + 'px';
+        } else {
+            maxW = q.image_size === 'small' ? '120px' : q.image_size === 'large' ? '300px' : '200px';
+        }
         return `<br><div style="text-align:${q.image_alignment || 'center'}; margin-top:4px;">
-            <img src="${q.image_path}" style="max-width:${maxW}; max-height:200px;">
+            <img src="${q.image_path}" style="max-width:${maxW}; max-height:400px;">
         </div>`;
     },
 
