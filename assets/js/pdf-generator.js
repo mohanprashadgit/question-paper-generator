@@ -185,6 +185,81 @@ const PDFGenerator = {
         doc.line(m.left, y, pageWidth - m.right, y);
         y += 4;
 
+        // === PRELOAD QUESTION IMAGES ===
+        const imageCache = new Map();
+        const preloadPromises = [];
+        const collectImages = (list) => {
+            if (!Array.isArray(list)) return;
+            list.forEach(item => {
+                if (item.image_path && typeof item.image_path === 'string' && item.image_path.trim()) {
+                    preloadPromises.push((async () => {
+                        try {
+                            const loaded = await this.loadImage(item.image_path);
+                            if (loaded) imageCache.set(item.image_path, loaded);
+                        } catch (err) {
+                            console.warn('Image preload failed:', err);
+                        }
+                    })());
+                }
+                if (item.children && Array.isArray(item.children)) {
+                    collectImages(item.children);
+                }
+            });
+        };
+        collectImages(questions);
+        await Promise.all(preloadPromises);
+
+        // Helper to wrap question cell with image and appropriate minCellHeight
+        const makeQuestionCell = (text, qItem) => {
+            const imgData = (qItem && qItem.image_path) ? imageCache.get(qItem.image_path) : null;
+            if (!imgData) {
+                return text;
+            }
+
+            const naturalWidth = imgData.width || 300;
+            const naturalHeight = imgData.height || 200;
+            const aspect = naturalHeight / naturalWidth;
+            const maxColWidth = Math.max(60, contentWidth - 70);
+
+            let targetWidthMm;
+            if (qItem.image_size === 'custom' && qItem.image_width) {
+                targetWidthMm = Math.min(parseFloat(qItem.image_width) * 0.264583, maxColWidth);
+            } else if (qItem.image_size === 'small') {
+                targetWidthMm = Math.min(35, maxColWidth);
+            } else if (qItem.image_size === 'large') {
+                targetWidthMm = Math.min(95, maxColWidth);
+            } else {
+                targetWidthMm = Math.min(60, maxColWidth);
+            }
+
+            let targetHeightMm = targetWidthMm * aspect;
+            if (targetHeightMm > 85) {
+                targetHeightMm = 85;
+                targetWidthMm = targetHeightMm / aspect;
+            }
+
+            doc.setFont('times', 'normal');
+            doc.setFontSize(11);
+            const splitLines = doc.splitTextToSize(text || '', maxColWidth);
+            const lineCount = Array.isArray(splitLines) ? Math.max(1, splitLines.length) : 1;
+            const textHeightMm = lineCount * 4.8;
+            const minHeightMm = textHeightMm + targetHeightMm + 9;
+
+            return {
+                content: text,
+                _imageInfo: {
+                    dataUrl: imgData.dataUrl || imgData.img,
+                    format: imgData.format || 'PNG',
+                    width: targetWidthMm,
+                    height: targetHeightMm,
+                    align: qItem.image_alignment || 'center'
+                },
+                styles: {
+                    minCellHeight: minHeightMm
+                }
+            };
+        };
+
         // === 6. SECTIONS & QUESTIONS ===
         template.sections.forEach(section => {
             const sectionQs = questions.filter(q => q.part === section.part && !q.parent_id);
@@ -225,7 +300,7 @@ const PDFGenerator = {
                     if (orA) {
                         tableBody.push([
                             `${q.question_number} (a)`,
-                            this.stripHTML(orA.question_text),
+                            makeQuestionCell(this.stripHTML(orA.question_text), orA),
                             `${orA.co || 'CO1'}-${orA.k_level || 'K1'}`,
                             String(orA.marks || q.marks || '')
                         ]);
@@ -234,7 +309,7 @@ const PDFGenerator = {
                     if (orB) {
                         tableBody.push([
                             `${q.question_number} (b)`,
-                            this.stripHTML(orB.question_text),
+                            makeQuestionCell(this.stripHTML(orB.question_text), orB),
                             `${orB.co || 'CO1'}-${orB.k_level || 'K1'}`,
                             String(orB.marks || q.marks || '')
                         ]);
@@ -243,14 +318,14 @@ const PDFGenerator = {
                     const subs = q.children.filter(c => c.sub_number);
                     tableBody.push([
                         String(q.question_number),
-                        this.stripHTML(q.question_text),
+                        makeQuestionCell(this.stripHTML(q.question_text), q),
                         `${q.co || 'CO1'}-${q.k_level || 'K1'}`,
                         String(q.marks || '')
                     ]);
                     subs.forEach(sub => {
                         tableBody.push([
                             '',
-                            `(${sub.sub_number}) ${this.stripHTML(sub.question_text)}`,
+                            makeQuestionCell(`(${sub.sub_number}) ${this.stripHTML(sub.question_text)}`, sub),
                             `${sub.co || 'CO1'}-${sub.k_level || 'K1'}`,
                             String(sub.marks || '')
                         ]);
@@ -263,7 +338,7 @@ const PDFGenerator = {
                     }
                     tableBody.push([
                         String(q.question_number),
-                        text,
+                        makeQuestionCell(text, q),
                         `${q.co || 'CO1'}-${q.k_level || 'K1'}`,
                         String(q.marks || '')
                     ]);
@@ -276,6 +351,7 @@ const PDFGenerator = {
                     head: [['Q. No', 'Question', 'CO-K Level', 'Max. Marks']],
                     body: tableBody,
                     theme: 'grid',
+                    rowPageBreak: 'avoid',
                     styles: {
                         font: 'times',
                         fontSize: 11,
@@ -298,7 +374,51 @@ const PDFGenerator = {
                         2: { cellWidth: 24, halign: 'center' },
                         3: { cellWidth: 22, halign: 'center' }
                     },
-                    margin: { left: m.left, right: m.right }
+                    margin: { left: m.left, right: m.right },
+                    didDrawCell: (data) => {
+                        if (data.section === 'body' && data.column.index === 1) {
+                            const raw = data.cell.raw;
+                            const imageInfo = raw && raw._imageInfo;
+                            if (imageInfo && imageInfo.dataUrl) {
+                                const cell = data.cell;
+                                const pLeft = typeof cell.padding === 'function' ? cell.padding('left') : (cell.padding?.left || 3);
+                                const pRight = typeof cell.padding === 'function' ? cell.padding('right') : (cell.padding?.right || 3);
+                                const pTop = typeof cell.padding === 'function' ? cell.padding('top') : (cell.padding?.top || 3);
+                                const pBottom = typeof cell.padding === 'function' ? cell.padding('bottom') : (cell.padding?.bottom || 3);
+
+                                const availWidth = cell.width - pLeft - pRight;
+                                let imgX = cell.x + pLeft;
+                                if (imageInfo.align === 'center') {
+                                    imgX = cell.x + pLeft + Math.max(0, (availWidth - imageInfo.width) / 2);
+                                } else if (imageInfo.align === 'right') {
+                                    imgX = cell.x + cell.width - pRight - imageInfo.width;
+                                }
+
+                                const textLines = Array.isArray(cell.text) ? cell.text.length : 1;
+                                const fontSize = (cell.styles && cell.styles.fontSize) || 11;
+                                const lineH = fontSize * (25.4 / 72) * 1.25;
+                                const textHeight = textLines * lineH;
+                                let imgY = cell.y + pTop + textHeight + 2;
+
+                                const maxImgY = cell.y + cell.height - imageInfo.height - pBottom;
+                                if (imgY > maxImgY) imgY = maxImgY;
+                                if (imgY < cell.y + pTop) imgY = cell.y + pTop;
+
+                                try {
+                                    doc.addImage(
+                                        imageInfo.dataUrl,
+                                        imageInfo.format || 'PNG',
+                                        imgX,
+                                        imgY,
+                                        imageInfo.width,
+                                        imageInfo.height
+                                    );
+                                } catch (imgErr) {
+                                    console.warn('Failed to embed question image into PDF cell:', imgErr);
+                                }
+                            }
+                        }
+                    }
                 });
 
                 y = (doc.lastAutoTable?.finalY || y + 20) + 6;
@@ -433,8 +553,21 @@ const PDFGenerator = {
         tempDiv.innerHTML = html;
         document.body.appendChild(tempDiv);
 
+        // Ensure all images are fully loaded before capturing
+        const imgs = Array.from(tempDiv.querySelectorAll('img'));
+        if (imgs.length > 0) {
+            await Promise.all(imgs.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(res => {
+                    img.onload = res;
+                    img.onerror = res;
+                    setTimeout(res, 2500);
+                });
+            }));
+        }
+
         const opt = {
-            margin: [8, 10, 8, 10],
+            margin: [10, 12, 10, 12],
             filename: filename,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -486,27 +619,39 @@ const PDFGenerator = {
      */
     loadImage(src) {
         return new Promise((resolve) => {
-            if (!src) return resolve(null);
+            if (!src || typeof src !== 'string' || !src.trim()) return resolve(null);
             const img = new Image();
             if (src.startsWith('http://') || src.startsWith('https://')) {
                 img.crossOrigin = 'anonymous';
             }
             const timer = setTimeout(() => {
                 resolve(null);
-            }, 2500);
+            }, 3000);
 
             img.onload = () => {
                 clearTimeout(timer);
                 try {
+                    const naturalWidth = img.naturalWidth || img.width || 300;
+                    const naturalHeight = img.naturalHeight || img.height || 200;
+
+                    // If it's already a standard PNG/JPEG data URL, use it directly
+                    if (src.startsWith('data:image/png')) {
+                        return resolve({ dataUrl: src, width: naturalWidth, height: naturalHeight, format: 'PNG', img });
+                    }
+                    if (src.startsWith('data:image/jpeg') || src.startsWith('data:image/jpg')) {
+                        return resolve({ dataUrl: src, width: naturalWidth, height: naturalHeight, format: 'JPEG', img });
+                    }
+
+                    // Otherwise convert to standard PNG data URL via canvas
                     const canvas = document.createElement('canvas');
-                    canvas.width = img.naturalWidth || img.width;
-                    canvas.height = img.naturalHeight || img.height;
+                    canvas.width = naturalWidth;
+                    canvas.height = naturalHeight;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0);
                     const dataUrl = canvas.toDataURL('image/png');
-                    resolve({ dataUrl, width: canvas.width, height: canvas.height, img });
+                    resolve({ dataUrl, width: naturalWidth, height: naturalHeight, format: 'PNG', img });
                 } catch (e) {
-                    resolve({ dataUrl: null, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height, img });
+                    resolve({ dataUrl: src, width: img.naturalWidth || img.width || 300, height: img.naturalHeight || img.height || 200, format: 'PNG', img });
                 }
             };
 
