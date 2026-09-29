@@ -119,7 +119,7 @@ const Preview = {
         let html = `
             <div class="part-title">${section.title}</div>
             <div class="part-subtitle">${section.subtitle}</div>
-            <div class="part-subtitle" style="font-weight:normal; font-size:8pt; margin-bottom:1.5mm;">${section.description}</div>
+            <div class="part-subtitle" style="font-weight:normal; font-size:10pt; margin-bottom:1.5mm;">${section.description}</div>
             <table class="question-table">
                 <thead>
                     <tr>

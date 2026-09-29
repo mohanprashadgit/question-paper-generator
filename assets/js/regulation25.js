@@ -76,18 +76,18 @@ const REGULATION_25 = {
                 { label: 'Approved By HoD', line: true }
             ]
         },
-        margins: { top: 8, right: 10, bottom: 8, left: 10 },
+        margins: { top: 10, right: 12, bottom: 10, left: 12 },
         fontSize: {
-            collegeName: 13,
-            subtitle: 8,
-            examTitle: 11,
-            fieldLabel: 9,
-            fieldValue: 9,
-            sectionTitle: 10.5,
-            questionText: 9.5,
-            tableHeader: 9,
-            tableBody: 9,
-            footer: 8
+            collegeName: 14,
+            subtitle: 10,
+            examTitle: 13,
+            fieldLabel: 11,
+            fieldValue: 11,
+            sectionTitle: 13,
+            questionText: 11,
+            tableHeader: 11,
+            tableBody: 11,
+            footer: 10
         }
     },
 

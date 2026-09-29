@@ -92,17 +92,17 @@ const PDFGenerator = {
 
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
-        const m = template.pdfLayout?.margins || { top: 8, right: 10, bottom: 8, left: 10 };
+        const m = template.pdfLayout?.margins || { top: 10, right: 12, bottom: 10, left: 12 };
         const contentWidth = pageWidth - m.left - m.right;
         let y = m.top;
 
         // === 1. REG NO BOXES (top-right corner, above logo) ===
         if (template.pdfLayout?.showRegNoBoxes) {
             doc.setFont('times', 'bold');
-            doc.setFontSize(9);
+            doc.setFontSize(11);
             const regText = 'Reg. No. :';
             const regTextWidth = doc.getTextWidth(regText);
-            const boxSize = 4.5;
+            const boxSize = 5.5;
             const boxCount = template.pdfLayout.regNoBoxCount || 12;
             const totalBoxWidth = boxCount * (boxSize + 1);
             const regX = pageWidth - m.right - totalBoxWidth;
@@ -141,24 +141,24 @@ const PDFGenerator = {
 
         // === 3. REGULATION BELOW LOGO ===
         doc.setFont('times', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(12);
         const rawReg = paperData.regulation || '21';
         const regYear = rawReg.length === 2 ? '20' + rawReg : rawReg;
         const regText = `(Regulations ${regYear})`;
         doc.text(regText, pageWidth / 2, y, { align: 'center' });
-        y += 4.5;
+        y += 5.5;
 
         // === 4. EXAM TITLE ===
-        doc.setFontSize(11);
+        doc.setFontSize(13);
         doc.setFont('times', 'bold');
         const examTitle = paperData.exam_type || 'Internal Assessment-I';
         doc.text(examTitle, pageWidth / 2, y, { align: 'center' });
         const titleWidth = doc.getTextWidth(examTitle);
         doc.line((pageWidth - titleWidth) / 2, y + 0.6, (pageWidth + titleWidth) / 2, y + 0.6);
-        y += 5;
+        y += 6;
 
         // === 5. PAPER INFO ===
-        doc.setFontSize(9);
+        doc.setFontSize(11);
         const leftCol = m.left;
         const rightCol = pageWidth / 2 + 5;
 
@@ -178,12 +178,12 @@ const PDFGenerator = {
             doc.setFont('times', 'normal');
             doc.text(line.left, leftCol, y);
             doc.text(line.right, rightCol, y);
-            y += 4;
+            y += 5.5;
         });
 
-        y += 0.5;
+        y += 1;
         doc.line(m.left, y, pageWidth - m.right, y);
-        y += 3;
+        y += 4;
 
         // === 6. SECTIONS & QUESTIONS ===
         template.sections.forEach(section => {
@@ -197,20 +197,20 @@ const PDFGenerator = {
 
             // Section title
             doc.setFont('times', 'bold');
-            doc.setFontSize(10.5);
+            doc.setFontSize(13);
             doc.text(section.title, pageWidth / 2, y, { align: 'center' });
             const stWidth = doc.getTextWidth(section.title);
             doc.line((pageWidth - stWidth) / 2, y + 0.5, (pageWidth + stWidth) / 2, y + 0.5);
-            y += 3.5;
+            y += 5;
 
-            doc.setFontSize(9);
+            doc.setFontSize(11);
             doc.text(section.subtitle, pageWidth / 2, y, { align: 'center' });
-            y += 2.5;
+            y += 4;
 
             doc.setFont('times', 'normal');
-            doc.setFontSize(8);
+            doc.setFontSize(10);
             doc.text(section.description, pageWidth / 2, y, { align: 'center' });
-            y += 3;
+            y += 4;
 
             // Build table data
             const tableBody = [];
@@ -230,7 +230,7 @@ const PDFGenerator = {
                             String(orA.marks || q.marks || '')
                         ]);
                     }
-                    tableBody.push([{ content: '(OR)', colSpan: 4, styles: { halign: 'center', fontStyle: 'bold', fontSize: 9 } }]);
+                    tableBody.push([{ content: '(OR)', colSpan: 4, styles: { halign: 'center', fontStyle: 'bold', fontSize: 11 } }]);
                     if (orB) {
                         tableBody.push([
                             `${q.question_number} (b)`,
@@ -278,28 +278,30 @@ const PDFGenerator = {
                     theme: 'grid',
                     styles: {
                         font: 'times',
-                        fontSize: 9,
-                        cellPadding: 2,
+                        fontSize: 11,
+                        cellPadding: 3,
                         lineColor: [0, 0, 0],
-                        lineWidth: 0.2,
-                        textColor: [0, 0, 0]
+                        lineWidth: 0.25,
+                        textColor: [0, 0, 0],
+                        minCellHeight: 8
                     },
                     headStyles: {
-                        fillColor: [240, 240, 240],
+                        fillColor: [230, 230, 230],
                         textColor: [0, 0, 0],
                         fontStyle: 'bold',
-                        halign: 'center'
+                        halign: 'center',
+                        fontSize: 11
                     },
                     columnStyles: {
-                        0: { cellWidth: 16, halign: 'center' },
+                        0: { cellWidth: 18, halign: 'center' },
                         1: { cellWidth: 'auto' },
-                        2: { cellWidth: 22, halign: 'center' },
-                        3: { cellWidth: 20, halign: 'center' }
+                        2: { cellWidth: 24, halign: 'center' },
+                        3: { cellWidth: 22, halign: 'center' }
                     },
                     margin: { left: m.left, right: m.right }
                 });
 
-                y = (doc.lastAutoTable?.finalY || y + 20) + 4;
+                y = (doc.lastAutoTable?.finalY || y + 20) + 6;
             }
         });
 
@@ -311,11 +313,11 @@ const PDFGenerator = {
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(10);
+            doc.setFontSize(12);
             doc.text('Competency Level Analysis', pageWidth / 2, y, { align: 'center' });
             const claWidth = doc.getTextWidth('Competency Level Analysis');
             doc.line((pageWidth - claWidth) / 2, y + 0.5, (pageWidth + claWidth) / 2, y + 0.5);
-            y += 4;
+            y += 5;
 
             const compBody = [];
             Object.values(analysis.competency.data).forEach(entry => {
@@ -330,12 +332,12 @@ const PDFGenerator = {
                 head: [['Level', "Bloom's Taxonomy", 'Question No.', 'Marks', 'Contribution %']],
                 body: compBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 8.5, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' },
-                columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 1: { cellWidth: 30 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 18, halign: 'center' }, 4: { cellWidth: 26, halign: 'center' } },
+                styles: { font: 'times', fontSize: 10.5, cellPadding: 2.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 7 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 10.5 },
+                columnStyles: { 0: { cellWidth: 16, halign: 'center' }, 1: { cellWidth: 34 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 20, halign: 'center' }, 4: { cellWidth: 28, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
-            y = (doc.lastAutoTable?.finalY || y + 20) + 5;
+            y = (doc.lastAutoTable?.finalY || y + 20) + 6;
         }
 
         // === 8. CO ANALYSIS ===
@@ -346,11 +348,11 @@ const PDFGenerator = {
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(10);
+            doc.setFontSize(12);
             doc.text('Course Outcome Marks Contribution', pageWidth / 2, y, { align: 'center' });
             const coaWidth = doc.getTextWidth('Course Outcome Marks Contribution');
             doc.line((pageWidth - coaWidth) / 2, y + 0.5, (pageWidth + coaWidth) / 2, y + 0.5);
-            y += 4;
+            y += 5;
 
             const coBody = [];
             Object.values(analysis.coAnalysis.data).forEach(entry => {
@@ -363,9 +365,9 @@ const PDFGenerator = {
                 head: [['Course Outcome', 'Marks', 'Contribution %']],
                 body: coBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 8.5, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.2, textColor: [0, 0, 0] },
-                headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center' },
-                columnStyles: { 0: { cellWidth: 40, halign: 'center' }, 1: { cellWidth: 30, halign: 'center' }, 2: { cellWidth: 40, halign: 'center' } },
+                styles: { font: 'times', fontSize: 10.5, cellPadding: 2.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 7 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 10.5 },
+                columnStyles: { 0: { cellWidth: 50, halign: 'center' }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 45, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
             y = (doc.lastAutoTable?.finalY || y + 20) + 8;
@@ -380,7 +382,7 @@ const PDFGenerator = {
         }
 
         doc.setFont('times', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(10);
         const footerCols = template.pdfLayout?.footer?.columns || [
             { label: 'Prepared By' },
             { label: 'Course Coordinator' },

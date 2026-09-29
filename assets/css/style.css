@@ -1243,9 +1243,9 @@ input, select, textarea { font-family: inherit; }
     min-height: 297mm;
     background: #fff;
     box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-    padding: 8mm 10mm;
+    padding: 10mm 12mm;
     font-family: 'Times New Roman', Times, serif;
-    font-size: 10pt;
+    font-size: 11pt;
     line-height: 1.3;
     color: #000;
     position: relative;
@@ -1268,7 +1268,7 @@ input, select, textarea { font-family: inherit; }
 
 .a4-page .college-header .header-regulation {
     text-align: center;
-    font-size: 10pt;
+    font-size: 12pt;
     font-weight: bold;
     margin-top: 1.5mm;
     margin-bottom: 0.5mm;
@@ -1277,7 +1277,7 @@ input, select, textarea { font-family: inherit; }
 
 .a4-page .exam-title {
     text-align: center;
-    font-size: 11pt;
+    font-size: 13pt;
     font-weight: bold;
     text-decoration: underline;
     margin: 2mm 0 1.5mm 0;
@@ -1287,7 +1287,7 @@ input, select, textarea { font-family: inherit; }
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
     gap: 1.5px 12px;
-    font-size: 9pt;
+    font-size: 11pt;
     margin-bottom: 2mm;
     border-bottom: 1px solid #000;
     padding-bottom: 1.5mm;
@@ -1310,21 +1310,21 @@ input, select, textarea { font-family: inherit; }
     display: flex;
     align-items: center;
     gap: 3px;
-    font-size: 9pt;
+    font-size: 11pt;
     font-weight: bold;
     z-index: 1;
 }
 
 .a4-page .reg-no-box {
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
     border: 1px solid #000;
     display: inline-block;
 }
 
 .a4-page .part-title {
     text-align: center;
-    font-size: 10.5pt;
+    font-size: 13pt;
     font-weight: bold;
     margin: 2.5mm 0 0.5mm 0;
     text-decoration: underline;
@@ -1332,7 +1332,7 @@ input, select, textarea { font-family: inherit; }
 
 .a4-page .part-subtitle {
     text-align: center;
-    font-size: 9pt;
+    font-size: 11pt;
     font-weight: bold;
     margin-bottom: 1.5mm;
 }
@@ -1341,7 +1341,7 @@ input, select, textarea { font-family: inherit; }
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 2.5mm;
-    font-size: 9pt;
+    font-size: 11pt;
 }
 
 .a4-page .question-table th,
@@ -1355,7 +1355,7 @@ input, select, textarea { font-family: inherit; }
     background: #f0f0f0;
     font-weight: bold;
     text-align: center;
-    font-size: 8.5pt;
+    font-size: 11pt;
     padding: 3px 4px;
 }
 
@@ -1381,7 +1381,7 @@ input, select, textarea { font-family: inherit; }
 .a4-page .or-row td {
     text-align: center;
     font-weight: bold;
-    font-size: 9pt;
+    font-size: 11pt;
     padding: 1px 0;
     border-left: 1px solid #000;
     border-right: 1px solid #000;
@@ -1393,7 +1393,7 @@ input, select, textarea { font-family: inherit; }
 }
 
 .a4-page .analysis-title {
-    font-size: 9.5pt;
+    font-size: 12pt;
     font-weight: bold;
     text-align: center;
     text-decoration: underline;
@@ -1403,7 +1403,7 @@ input, select, textarea { font-family: inherit; }
 .a4-page .analysis-table-pdf {
     width: 100%;
     border-collapse: collapse;
-    font-size: 8.5pt;
+    font-size: 10.5pt;
     margin-bottom: 2.5mm;
 }
 
@@ -1417,6 +1417,7 @@ input, select, textarea { font-family: inherit; }
 .a4-page .analysis-table-pdf th {
     background: #f0f0f0;
     font-weight: bold;
+    font-size: 10.5pt;
 }
 
 .a4-page .footer-section {
@@ -1424,7 +1425,7 @@ input, select, textarea { font-family: inherit; }
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 8px;
-    font-size: 8.5pt;
+    font-size: 10pt;
     text-align: center;
     page-break-inside: avoid;
 }
