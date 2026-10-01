@@ -233,26 +233,26 @@ const PDFGenerator = {
             if (qItem.image_size === 'custom' && qItem.image_width) {
                 targetWidthMm = Math.min(parseFloat(qItem.image_width) * 0.264583 * imgScale, maxColWidth);
             } else if (qItem.image_size === 'small') {
-                targetWidthMm = Math.min(35 * imgScale, maxColWidth);
+                targetWidthMm = Math.min(32 * imgScale, maxColWidth);
             } else if (qItem.image_size === 'large') {
-                targetWidthMm = Math.min(95 * imgScale, maxColWidth);
+                targetWidthMm = Math.min(80 * imgScale, maxColWidth);
             } else {
-                targetWidthMm = Math.min(60 * imgScale, maxColWidth);
+                targetWidthMm = Math.min(52 * imgScale, maxColWidth);
             }
 
             let targetHeightMm = targetWidthMm * aspect;
-            const maxImgHeight = 85 * imgScale;
+            const maxImgHeight = Math.min(50, 68 * imgScale);
             if (targetHeightMm > maxImgHeight) {
                 targetHeightMm = maxImgHeight;
                 targetWidthMm = targetHeightMm / aspect;
             }
 
             doc.setFont('times', 'normal');
-            doc.setFontSize(11);
+            doc.setFontSize(10.5);
             const splitLines = doc.splitTextToSize(text || '', maxColWidth);
             const lineCount = Array.isArray(splitLines) ? Math.max(1, splitLines.length) : 1;
-            const textHeightMm = lineCount * 4.8;
-            const minHeightMm = textHeightMm + targetHeightMm + 9;
+            const textHeightMm = lineCount * 4.2;
+            const minHeightMm = textHeightMm + targetHeightMm + 5;
 
             return {
                 content: text,
@@ -274,27 +274,27 @@ const PDFGenerator = {
             const sectionQs = questions.filter(q => q.part === section.part && !q.parent_id);
 
             // Check page space
-            if (y > pageHeight - 45) {
+            if (y > pageHeight - 40 && doc.internal.getNumberOfPages() < 3) {
                 doc.addPage();
                 y = m.top;
             }
 
             // Section title
             doc.setFont('times', 'bold');
-            doc.setFontSize(13);
+            doc.setFontSize(12.5);
             doc.text(section.title, pageWidth / 2, y, { align: 'center' });
             const stWidth = doc.getTextWidth(section.title);
             doc.line((pageWidth - stWidth) / 2, y + 0.5, (pageWidth + stWidth) / 2, y + 0.5);
-            y += 5;
+            y += 4.5;
 
-            doc.setFontSize(11);
+            doc.setFontSize(10.5);
             doc.text(section.subtitle, pageWidth / 2, y, { align: 'center' });
-            y += 4;
+            y += 3.5;
 
             doc.setFont('times', 'normal');
-            doc.setFontSize(10);
+            doc.setFontSize(9.5);
             doc.text(section.description, pageWidth / 2, y, { align: 'center' });
-            y += 4;
+            y += 3.5;
 
             // Build table data
             const tableBody = [];
@@ -363,19 +363,19 @@ const PDFGenerator = {
                     rowPageBreak: 'avoid',
                     styles: {
                         font: 'times',
-                        fontSize: 11,
-                        cellPadding: 2,
+                        fontSize: 10.5,
+                        cellPadding: 1.8,
                         lineColor: [0, 0, 0],
                         lineWidth: 0.25,
                         textColor: [0, 0, 0],
-                        minCellHeight: 6
+                        minCellHeight: 5.5
                     },
                     headStyles: {
                         fillColor: [230, 230, 230],
                         textColor: [0, 0, 0],
                         fontStyle: 'bold',
                         halign: 'center',
-                        fontSize: 11
+                        fontSize: 10.5
                     },
                     columnStyles: {
                         0: { cellWidth: 18, halign: 'center' },
@@ -436,17 +436,17 @@ const PDFGenerator = {
 
         // === 7. COMPETENCY ANALYSIS ===
         if (analysis?.competency?.data) {
-            if (y > pageHeight - 40 && doc.internal.getNumberOfPages() < 2) {
+            if (y > pageHeight - 48 && doc.internal.getNumberOfPages() < 3) {
                 doc.addPage();
                 y = m.top;
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(10);
+            doc.setFontSize(9.5);
             doc.text('Competency Level Analysis', pageWidth / 2, y, { align: 'center' });
             const claWidth = doc.getTextWidth('Competency Level Analysis');
             doc.line((pageWidth - claWidth) / 2, y + 0.5, (pageWidth + claWidth) / 2, y + 0.5);
-            y += 3;
+            y += 2.5;
 
             const compBody = [];
             Object.values(analysis.competency.data).forEach(entry => {
@@ -461,27 +461,27 @@ const PDFGenerator = {
                 head: [['Level', "Bloom's Taxonomy", 'Question No.', 'Marks', 'Contribution %']],
                 body: compBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 5 },
-                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 9 },
-                columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 1: { cellWidth: 30 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 18, halign: 'center' }, 4: { cellWidth: 24, halign: 'center' } },
+                styles: { font: 'times', fontSize: 8.5, cellPadding: 1.2, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 4.5 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8.5 },
+                columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 1: { cellWidth: 28 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 16, halign: 'center' }, 4: { cellWidth: 24, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
-            y = (doc.lastAutoTable?.finalY || y + 20) + 3;
+            y = (doc.lastAutoTable?.finalY || y + 20) + 2.5;
         }
 
         // === 8. CO ANALYSIS ===
         if (analysis?.coAnalysis?.data) {
-            if (y > pageHeight - 30 && doc.internal.getNumberOfPages() < 2) {
+            if (y > pageHeight - 42 && doc.internal.getNumberOfPages() < 3) {
                 doc.addPage();
                 y = m.top;
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(10);
+            doc.setFontSize(9.5);
             doc.text('Course Outcome Marks Contribution', pageWidth / 2, y, { align: 'center' });
             const coaWidth = doc.getTextWidth('Course Outcome Marks Contribution');
             doc.line((pageWidth - coaWidth) / 2, y + 0.5, (pageWidth + coaWidth) / 2, y + 0.5);
-            y += 3;
+            y += 2.5;
 
             const coBody = [];
             Object.values(analysis.coAnalysis.data).forEach(entry => {
@@ -496,25 +496,42 @@ const PDFGenerator = {
                 head: [['Course Outcome', 'Question No.', 'Marks', 'Contribution %']],
                 body: coBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 5 },
-                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 9 },
-                columnStyles: { 0: { cellWidth: 28, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 26, halign: 'center' } },
+                styles: { font: 'times', fontSize: 8.5, cellPadding: 1.2, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 4.5 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 8.5 },
+                columnStyles: { 0: { cellWidth: 26, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'center' }, 2: { cellWidth: 18, halign: 'center' }, 3: { cellWidth: 24, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
-            y = (doc.lastAutoTable?.finalY || y + 20) + 3;
+            y = (doc.lastAutoTable?.finalY || y + 20) + 2.5;
         }
 
-        // === 9. FOOTER SIGNATURES (with strict 2-page enforcement) ===
-        // Enforce strict 2-page limit: delete any excess pages
+        // === 9. FOOTER SIGNATURES ===
+        // Delete excess pages beyond 3 (mostly 2, otherwise 3)
         let currentTotalPages = doc.internal.getNumberOfPages();
-        if (currentTotalPages > 2) {
-            for (let p = currentTotalPages; p > 2; p--) {
+        if (currentTotalPages > 3) {
+            for (let p = currentTotalPages; p > 3; p--) {
                 doc.deletePage(p);
             }
-            doc.setPage(2);
         }
-        // Position footer at bottom of last page (max page 2)
-        y = doc.internal.pageSize.getHeight() - 24;
+
+        // Set active page to the last page
+        const finalPageCount = doc.internal.getNumberOfPages();
+        doc.setPage(finalPageCount);
+
+        let lastTableY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : y;
+        const pageH = doc.internal.pageSize.getHeight();
+        const footerReservedH = 20;
+
+        // If the table on the final page came too close to the bottom:
+        if (lastTableY + footerReservedH > pageH - m.bottom) {
+            if (finalPageCount < 3) {
+                doc.addPage();
+                doc.setPage(finalPageCount + 1);
+                lastTableY = m.top;
+            }
+        }
+
+        // Position footer safely at bottom of page, never overlapping the table
+        const finalFooterY = Math.max(lastTableY + 8, pageH - 20);
 
         doc.setFont('times', 'normal');
         doc.setFontSize(10);
@@ -528,8 +545,8 @@ const PDFGenerator = {
 
         footerCols.forEach((col, i) => {
             const x = m.left + (i * colWidth) + colWidth / 2;
-            doc.line(x - 18, y, x + 18, y);
-            doc.text(col.label, x, y + 4, { align: 'center' });
+            doc.line(x - 18, finalFooterY, x + 18, finalFooterY);
+            doc.text(col.label, x, finalFooterY + 4, { align: 'center' });
         });
 
         // === 10. SAVE PDF FILE ===
