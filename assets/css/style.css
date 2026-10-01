@@ -2535,3 +2535,69 @@ input, select, textarea { font-family: inherit; }
     margin-left: 6px;
 }
 
+/* ============================================================
+   CREDITS FOOTER — Gradient Bar Style
+   ============================================================ */
+.credits-footer {
+    margin-top: 48px;
+    overflow: hidden;
+}
+
+.credits-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 24px;
+    color: #fff;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.credits-bar-dev {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 40%, #a855f7 100%);
+}
+
+.credits-bar-guide {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+}
+
+.credits-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.credits-text {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.credits-text strong {
+    font-weight: 700;
+    color: #fff;
+}
+
+.credits-text em {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 400;
+}
+
+@media (max-width: 768px) {
+    .credits-bar {
+        flex-wrap: wrap;
+        text-align: center;
+        padding: 10px 16px;
+    }
+    .credits-text {
+        font-size: 11px;
+    }
+    .credits-footer {
+        margin-bottom: 56px; /* space for bottom nav */
+    }
+}
+
+@media print {
+    .credits-footer { display: none; }
+}
