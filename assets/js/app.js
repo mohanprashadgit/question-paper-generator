@@ -411,7 +411,7 @@ const App = {
                                 or_group: null,
                                 sub_number: null,
                                 sort_order: qNum,
-                                mcq_options: isMCQ ? [{label:'A',text:''},{label:'B',text:''},{label:'C',text:''},{label:'D',text:''}] : null,
+                                mcq_options: isMCQ ? [{ label: 'A', text: '' }, { label: 'B', text: '' }, { label: 'C', text: '' }, { label: 'D', text: '' }] : null,
                                 children: []
                             });
                         }
@@ -1186,8 +1186,8 @@ const App = {
         const badge = document.getElementById('detailsValidation');
         if (!badge) return;
         const valid = this.state.course_code && this.state.course_code.trim() &&
-                      this.state.course_name && this.state.course_name.trim() &&
-                      this.state.programme;
+            this.state.course_name && this.state.course_name.trim() &&
+            this.state.programme;
         if (valid) {
             badge.className = 'validation-badge valid';
             badge.innerHTML = '✓ Details Complete';
@@ -1339,6 +1339,8 @@ const App = {
         this.syncFieldsToState();
         this.ensureRegulationStructure();
         const paperData = this.getCurrentPaperData();
+        // Auto-save paper before printing
+        this.savePaper();
         Preview.print(paperData);
     },
 
@@ -1387,6 +1389,16 @@ const App = {
         Storage.clearCurrentPaper();
 
         this.navigate('create');
+
+        // Force-clear all form fields and editors after DOM renders
+        setTimeout(() => {
+            this.applyFieldValues();
+            // Clear all Quill editors
+            document.querySelectorAll('.ql-editor').forEach(ed => {
+                ed.innerHTML = '';
+            });
+            this.updatePreview();
+        }, 200);
     },
 
     loadPaper(id) {
@@ -1399,6 +1411,12 @@ const App = {
         this.loadState(paper);
         Storage.saveCurrentPaper(paper);
         this.navigate('create');
+
+        // Re-apply field values after DOM has rendered to ensure paper details are populated
+        setTimeout(() => {
+            this.applyFieldValues();
+            this.updatePreview();
+        }, 200);
     },
 
     // =============================================
@@ -1438,11 +1456,11 @@ const App = {
     updateDashboardStats() {
         const papers = Storage.getAllPapers();
         const bank = Storage.getQuestionBank();
+        const regs = this.getAllRegulations();
 
         const el = (id) => document.getElementById(id);
         if (el('statTotalPapers')) el('statTotalPapers').textContent = papers.length;
-        if (el('statDrafts')) el('statDrafts').textContent = papers.filter(p => p.status === 'draft').length;
-        if (el('statCompleted')) el('statCompleted').textContent = papers.filter(p => p.status === 'completed' || p.status === 'exported').length;
+        if (el('statRegulations')) el('statRegulations').textContent = regs.length;
         if (el('statBankCount')) el('statBankCount').textContent = bank.length;
     },
 
@@ -1464,7 +1482,6 @@ const App = {
 
         container.innerHTML = papers.map(p => {
             const modified = p.updated_at ? new Date(p.updated_at).toLocaleDateString() : '';
-            const created = p.created_at ? new Date(p.created_at).toLocaleDateString() : '';
             return `
             <div class="recent-paper-card" onclick="App.loadPaper('${p.id}')">
                 <div class="recent-paper-icon">
@@ -1475,7 +1492,7 @@ const App = {
                     <p>${p.regulation} Regulation • ${p.exam_type || 'Assessment'} • Modified: ${modified}</p>
                 </div>
                 <div class="recent-paper-meta">
-                    <span class="status-badge ${p.status}">${p.status}</span>
+                    <span class="qbank-tag" style="font-size:12px;">${p.regulation} Reg</span>
                 </div>
             </div>`;
         }).join('');

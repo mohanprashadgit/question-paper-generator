@@ -43,7 +43,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             Dashboard
         </div>
-        <div class="nav-item" data-page="create" onclick="App.navigate('create')">
+        <div class="nav-item" data-page="create" onclick="App.createNewPaper()">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Create Paper
         </div>
@@ -120,21 +120,21 @@
                         </div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon gold">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <div class="stat-icon blue">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                         </div>
                         <div class="stat-info">
-                            <h4 id="statDrafts">0</h4>
-                            <p>Drafts</p>
+                            <h4 id="statRegulations">2</h4>
+                            <p>Regulations</p>
                         </div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon green">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                         </div>
                         <div class="stat-info">
-                            <h4 id="statCompleted">0</h4>
-                            <p>Completed</p>
+                            <h4 id="statBankCount">0</h4>
+                            <p>Question Bank</p>
                         </div>
                     </div>
                 </div>
@@ -261,6 +261,12 @@
                             <input class="form-input" id="fieldDuration" value="1 1/2 hrs" placeholder="e.g. 1 1/2 hrs" oninput="App.onFieldChange()">
                         </div>
                     </div>
+                    <div style="padding: 12px 20px 16px; text-align: right;">
+                        <button class="btn btn-primary" onclick="App.savePaper()" style="padding: 8px 28px; font-size: 14px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 6px;"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save Paper
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Create Page Split Layout: Editor + Preview -->
@@ -374,13 +380,6 @@
                             <option value="">All Regs</option>
                             <option value="21">21 Reg</option>
                             <option value="25">25 Reg</option>
-                        </select>
-
-                        <select class="filter-input" id="savedFilterStatus" style="flex: 0.8; min-width: 110px;" onchange="Storage.filterPapers()">
-                            <option value="">All Statuses</option>
-                            <option value="draft">Draft</option>
-                            <option value="completed">Completed</option>
-                            <option value="exported">Exported</option>
                         </select>
 
                         <button class="btn btn-sm btn-outline" onclick="Storage.resetFilters()" title="Reset Filters" style="height:38px;">
@@ -576,7 +575,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             <span>Home</span>
         </button>
-        <button class="bottom-nav-item" data-page="create" onclick="App.navigate('create')">
+        <button class="bottom-nav-item" data-page="create" onclick="App.createNewPaper()">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             <span>Create</span>
         </button>

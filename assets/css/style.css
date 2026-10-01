@@ -1266,6 +1266,12 @@ input, select, textarea { font-family: inherit; }
     object-fit: contain;
 }
 
+/* Hide logo and reg no boxes in live preview panel only (still shown in print & PDF) */
+#a4Preview .college-header .college-logo,
+#a4Preview .college-header .reg-no-row {
+    display: none;
+}
+
 .a4-page .college-header .header-regulation {
     text-align: center;
     font-size: 12pt;

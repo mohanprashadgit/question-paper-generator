@@ -11,6 +11,8 @@ const PDFGenerator = {
         if (!paperDataOverride && typeof App !== 'undefined') {
             App.syncFieldsToState();
             App.ensureRegulationStructure();
+            // Auto-save paper before PDF export
+            App.savePaper();
         }
 
         const paperData = paperDataOverride || (typeof App !== 'undefined' ? App.getCurrentPaperData() : {});
@@ -209,6 +211,9 @@ const PDFGenerator = {
         collectImages(questions);
         await Promise.all(preloadPromises);
 
+        // Count total images for adaptive sizing within 2-page limit
+        const totalImageCount = imageCache.size;
+
         // Helper to wrap question cell with image and appropriate minCellHeight
         const makeQuestionCell = (text, qItem) => {
             const imgData = (qItem && qItem.image_path) ? imageCache.get(qItem.image_path) : null;
@@ -221,20 +226,24 @@ const PDFGenerator = {
             const aspect = naturalHeight / naturalWidth;
             const maxColWidth = Math.max(60, contentWidth - 70);
 
+            // Scale down images when many are present to stay within 2-page limit
+            const imgScale = totalImageCount > 5 ? 0.45 : totalImageCount > 3 ? 0.65 : 1.0;
+
             let targetWidthMm;
             if (qItem.image_size === 'custom' && qItem.image_width) {
-                targetWidthMm = Math.min(parseFloat(qItem.image_width) * 0.264583, maxColWidth);
+                targetWidthMm = Math.min(parseFloat(qItem.image_width) * 0.264583 * imgScale, maxColWidth);
             } else if (qItem.image_size === 'small') {
-                targetWidthMm = Math.min(35, maxColWidth);
+                targetWidthMm = Math.min(35 * imgScale, maxColWidth);
             } else if (qItem.image_size === 'large') {
-                targetWidthMm = Math.min(95, maxColWidth);
+                targetWidthMm = Math.min(95 * imgScale, maxColWidth);
             } else {
-                targetWidthMm = Math.min(60, maxColWidth);
+                targetWidthMm = Math.min(60 * imgScale, maxColWidth);
             }
 
             let targetHeightMm = targetWidthMm * aspect;
-            if (targetHeightMm > 85) {
-                targetHeightMm = 85;
+            const maxImgHeight = 85 * imgScale;
+            if (targetHeightMm > maxImgHeight) {
+                targetHeightMm = maxImgHeight;
                 targetWidthMm = targetHeightMm / aspect;
             }
 
@@ -355,11 +364,11 @@ const PDFGenerator = {
                     styles: {
                         font: 'times',
                         fontSize: 11,
-                        cellPadding: 3,
+                        cellPadding: 2,
                         lineColor: [0, 0, 0],
                         lineWidth: 0.25,
                         textColor: [0, 0, 0],
-                        minCellHeight: 8
+                        minCellHeight: 6
                     },
                     headStyles: {
                         fillColor: [230, 230, 230],
@@ -421,23 +430,23 @@ const PDFGenerator = {
                     }
                 });
 
-                y = (doc.lastAutoTable?.finalY || y + 20) + 6;
+                y = (doc.lastAutoTable?.finalY || y + 20) + 3;
             }
         });
 
         // === 7. COMPETENCY ANALYSIS ===
         if (analysis?.competency?.data) {
-            if (y > pageHeight - 65) {
+            if (y > pageHeight - 40 && doc.internal.getNumberOfPages() < 2) {
                 doc.addPage();
                 y = m.top;
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(12);
+            doc.setFontSize(10);
             doc.text('Competency Level Analysis', pageWidth / 2, y, { align: 'center' });
             const claWidth = doc.getTextWidth('Competency Level Analysis');
             doc.line((pageWidth - claWidth) / 2, y + 0.5, (pageWidth + claWidth) / 2, y + 0.5);
-            y += 5;
+            y += 3;
 
             const compBody = [];
             Object.values(analysis.competency.data).forEach(entry => {
@@ -452,27 +461,27 @@ const PDFGenerator = {
                 head: [['Level', "Bloom's Taxonomy", 'Question No.', 'Marks', 'Contribution %']],
                 body: compBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 10.5, cellPadding: 2.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 7 },
-                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 10.5 },
-                columnStyles: { 0: { cellWidth: 16, halign: 'center' }, 1: { cellWidth: 34 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 20, halign: 'center' }, 4: { cellWidth: 28, halign: 'center' } },
+                styles: { font: 'times', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 5 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 9 },
+                columnStyles: { 0: { cellWidth: 14, halign: 'center' }, 1: { cellWidth: 30 }, 2: { cellWidth: 'auto', halign: 'center' }, 3: { cellWidth: 18, halign: 'center' }, 4: { cellWidth: 24, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
-            y = (doc.lastAutoTable?.finalY || y + 20) + 6;
+            y = (doc.lastAutoTable?.finalY || y + 20) + 3;
         }
 
         // === 8. CO ANALYSIS ===
         if (analysis?.coAnalysis?.data) {
-            if (y > pageHeight - 50) {
+            if (y > pageHeight - 30 && doc.internal.getNumberOfPages() < 2) {
                 doc.addPage();
                 y = m.top;
             }
 
             doc.setFont('times', 'bold');
-            doc.setFontSize(12);
+            doc.setFontSize(10);
             doc.text('Course Outcome Marks Contribution', pageWidth / 2, y, { align: 'center' });
             const coaWidth = doc.getTextWidth('Course Outcome Marks Contribution');
             doc.line((pageWidth - coaWidth) / 2, y + 0.5, (pageWidth + coaWidth) / 2, y + 0.5);
-            y += 5;
+            y += 3;
 
             const coBody = [];
             Object.values(analysis.coAnalysis.data).forEach(entry => {
@@ -485,21 +494,25 @@ const PDFGenerator = {
                 head: [['Course Outcome', 'Marks', 'Contribution %']],
                 body: coBody,
                 theme: 'grid',
-                styles: { font: 'times', fontSize: 10.5, cellPadding: 2.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 7 },
-                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 10.5 },
-                columnStyles: { 0: { cellWidth: 50, halign: 'center' }, 1: { cellWidth: 35, halign: 'center' }, 2: { cellWidth: 45, halign: 'center' } },
+                styles: { font: 'times', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 5 },
+                headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 9 },
+                columnStyles: { 0: { cellWidth: 35, halign: 'center' }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
-            y = (doc.lastAutoTable?.finalY || y + 20) + 8;
+            y = (doc.lastAutoTable?.finalY || y + 20) + 3;
         }
 
-        // === 9. FOOTER SIGNATURES ===
-        if (y > pageHeight - 28) {
-            doc.addPage();
-            y = pageHeight - 24;
-        } else {
-            y = Math.max(y, pageHeight - 24);
+        // === 9. FOOTER SIGNATURES (with strict 2-page enforcement) ===
+        // Enforce strict 2-page limit: delete any excess pages
+        let currentTotalPages = doc.internal.getNumberOfPages();
+        if (currentTotalPages > 2) {
+            for (let p = currentTotalPages; p > 2; p--) {
+                doc.deletePage(p);
+            }
+            doc.setPage(2);
         }
+        // Position footer at bottom of last page (max page 2)
+        y = doc.internal.pageSize.getHeight() - 24;
 
         doc.setFont('times', 'normal');
         doc.setFontSize(10);

@@ -253,7 +253,6 @@ const Storage = {
         const dept = document.getElementById('savedFilterDept')?.value || '';
         const year = document.getElementById('savedFilterYear')?.value || '';
         const reg = document.getElementById('savedFilterReg')?.value || '';
-        const status = document.getElementById('savedFilterStatus')?.value || '';
 
         let papers = this.getAllPapers();
 
@@ -270,11 +269,6 @@ const Storage = {
         // 3. Regulation filter
         if (reg) {
             papers = papers.filter(p => p.regulation === reg);
-        }
-
-        // 4. Status filter
-        if (status) {
-            papers = papers.filter(p => p.status === status);
         }
 
         // 5. Fast Multi-field Search filter (code, name, dept, exam, year, sem, reg)
@@ -315,7 +309,7 @@ const Storage = {
     },
 
     resetFilters() {
-        const ids = ['savedSearchInput', 'savedFilterDept', 'savedFilterYear', 'savedFilterReg', 'savedFilterStatus'];
+        const ids = ['savedSearchInput', 'savedFilterDept', 'savedFilterYear', 'savedFilterReg'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
@@ -389,7 +383,6 @@ const Storage = {
                             <th>Year / Sem</th>
                             <th>Regulation</th>
                             <th>Exam</th>
-                            <th>Status</th>
                             <th>Date</th>
                             <th style="text-align:center;">Actions</th>
                         </tr>
@@ -416,7 +409,6 @@ const Storage = {
                                 <td><span style="font-size:12px; color:var(--text); font-weight:500;">${yearSem}</span></td>
                                 <td><span class="qbank-tag">${p.regulation} Reg</span></td>
                                 <td><span style="font-size:12px; color:var(--text); font-weight:500;">${p.exam_type || '-'}</span></td>
-                                <td><span class="status-badge ${p.status}">${p.status}</span></td>
                                 <td>
                                     <div style="font-size:12px; font-weight:500; color:var(--text);">${modified}</div>
                                 </td>
