@@ -450,7 +450,7 @@ const PDFGenerator = {
 
             const compBody = [];
             Object.values(analysis.competency.data).forEach(entry => {
-                if (entry.marks > 0) {
+                if (entry.marks > 0 || (entry.questions && entry.questions.length > 0)) {
                     compBody.push([entry.level, entry.taxonomy, (entry.questions || []).join(', '), String(entry.marks), entry.percentage + '%']);
                 }
             });
@@ -485,18 +485,20 @@ const PDFGenerator = {
 
             const coBody = [];
             Object.values(analysis.coAnalysis.data).forEach(entry => {
-                coBody.push([entry.co, String(entry.marks), entry.percentage + '%']);
+                if (entry.marks > 0 || (entry.questions && entry.questions.length > 0)) {
+                    coBody.push([entry.co, (entry.questions || []).join(', '), String(entry.marks), entry.percentage + '%']);
+                }
             });
-            coBody.push([{ content: 'Total', styles: { fontStyle: 'bold' } }, String(analysis.coAnalysis.totalMarks || 0), '100%']);
+            coBody.push([{ content: 'Total', colSpan: 2, styles: { fontStyle: 'bold' } }, String(analysis.coAnalysis.totalMarks || 0), '100%']);
 
             doc.autoTable({
                 startY: y,
-                head: [['Course Outcome', 'Marks', 'Contribution %']],
+                head: [['Course Outcome', 'Question No.', 'Marks', 'Contribution %']],
                 body: coBody,
                 theme: 'grid',
                 styles: { font: 'times', fontSize: 9, cellPadding: 1.5, lineColor: [0, 0, 0], lineWidth: 0.25, textColor: [0, 0, 0], minCellHeight: 5 },
                 headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'center', fontSize: 9 },
-                columnStyles: { 0: { cellWidth: 35, halign: 'center' }, 1: { cellWidth: 25, halign: 'center' }, 2: { cellWidth: 35, halign: 'center' } },
+                columnStyles: { 0: { cellWidth: 28, halign: 'center' }, 1: { cellWidth: 'auto', halign: 'center' }, 2: { cellWidth: 20, halign: 'center' }, 3: { cellWidth: 26, halign: 'center' } },
                 margin: { left: m.left, right: m.right }
             });
             y = (doc.lastAutoTable?.finalY || y + 20) + 3;

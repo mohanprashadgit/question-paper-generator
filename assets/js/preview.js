@@ -219,7 +219,7 @@ const Preview = {
                     <tbody>`;
 
         Object.values(competency.data).forEach(entry => {
-            if (entry.marks > 0) {
+            if (entry.marks > 0 || (entry.questions && entry.questions.length > 0)) {
                 html += `<tr>
                     <td>${entry.level}</td>
                     <td>${entry.taxonomy}</td>
@@ -248,6 +248,7 @@ const Preview = {
                     <thead>
                         <tr>
                             <th>Course Outcome</th>
+                            <th>Question No.</th>
                             <th>Marks</th>
                             <th>Contribution %</th>
                         </tr>
@@ -255,15 +256,18 @@ const Preview = {
                     <tbody>`;
 
         Object.values(coAnalysis.data).forEach(entry => {
-            html += `<tr>
-                <td>${entry.co}</td>
-                <td>${entry.marks}</td>
-                <td>${entry.percentage}%</td>
-            </tr>`;
+            if (entry.marks > 0 || (entry.questions && entry.questions.length > 0)) {
+                html += `<tr>
+                    <td>${entry.co}</td>
+                    <td>${(entry.questions || []).join(', ')}</td>
+                    <td>${entry.marks}</td>
+                    <td>${entry.percentage}%</td>
+                </tr>`;
+            }
         });
 
         html += `<tr style="font-weight:bold; background:#f0f0f0;">
-            <td>Total</td>
+            <td colspan="2">Total</td>
             <td>${coAnalysis.totalMarks || 0}</td>
             <td>100%</td>
         </tr></tbody></table></div>`;

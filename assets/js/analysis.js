@@ -33,34 +33,52 @@ const Analysis = {
     flattenQuestions(questions) {
         const flat = [];
         (questions || []).forEach(q => {
-            if (!q.children || q.children.length === 0) {
-                flat.push(q);
-            } else {
-                const orChildren = q.children.filter(c => c.or_group);
-                const subChildren = q.children.filter(c => c.sub_number);
+            const orChildren = q.children ? q.children.filter(c => c.or_group) : [];
+            const subChildren = q.children ? q.children.filter(c => c.sub_number) : [];
 
-                if (orChildren.length > 0) {
-                    // Add all OR options for mapping, but mark for analysis
-                    orChildren.forEach(child => {
+            if (orChildren.length > 0) {
+                // Evaluate all OR options (a and b) for accurate question paper analysis
+                orChildren.forEach(child => {
+                    const childSubs = child.children ? child.children.filter(sc => sc.sub_number) : [];
+                    if (childSubs.length > 0) {
+                        childSubs.forEach(sub => {
+                            flat.push({
+                                ...sub,
+                                question_number: q.question_number,
+                                or_group: child.or_group,
+                                sub_number: sub.sub_number,
+                                marks: parseInt(sub.marks) || Math.floor((parseInt(child.marks) || parseInt(q.marks) || 0) / childSubs.length),
+                                co: sub.co || child.co || q.co,
+                                k_level: sub.k_level || child.k_level || q.k_level
+                            });
+                        });
+                    } else {
                         flat.push({
                             ...child,
                             question_number: q.question_number,
-                            _isOrOption: true,
-                            _analyzeMarks: child.or_group === 'a' // Only count (a) for total
+                            or_group: child.or_group,
+                            marks: parseInt(child.marks) || parseInt(q.marks) || 0,
+                            co: child.co || q.co,
+                            k_level: child.k_level || q.k_level
                         });
+                    }
+                });
+            } else if (subChildren.length > 0) {
+                subChildren.forEach(child => {
+                    flat.push({
+                        ...child,
+                        question_number: q.question_number,
+                        sub_number: child.sub_number,
+                        marks: parseInt(child.marks) || Math.floor((parseInt(q.marks) || 0) / subChildren.length),
+                        co: child.co || q.co,
+                        k_level: child.k_level || q.k_level
                     });
-                } else if (subChildren.length > 0) {
-                    subChildren.forEach(child => {
-                        flat.push({
-                            ...child,
-                            question_number: q.question_number,
-                            _isSubQuestion: true,
-                            _analyzeMarks: true
-                        });
-                    });
-                } else {
-                    flat.push(q);
-                }
+                });
+            } else {
+                flat.push({
+                    ...q,
+                    marks: parseInt(q.marks) || 0
+                });
             }
         });
         return flat;
@@ -89,21 +107,11 @@ const Analysis = {
             const qLabel = this.getQLabel(q);
 
             if (result[kl]) {
-                // Avoid duplicate question labels
                 if (!result[kl].questions.includes(qLabel)) {
                     result[kl].questions.push(qLabel);
                 }
-
-                // For OR questions, only count (a) option marks toward total
-                if (q._isOrOption) {
-                    if (q._analyzeMarks) {
-                        result[kl].marks += marks;
-                        totalAnalysisMarks += marks;
-                    }
-                } else {
-                    result[kl].marks += marks;
-                    totalAnalysisMarks += marks;
-                }
+                result[kl].marks += marks;
+                totalAnalysisMarks += marks;
             }
         });
 
@@ -127,20 +135,17 @@ const Analysis = {
         questions.forEach(q => {
             const co = q.co || 'CO1';
             const marks = parseInt(q.marks) || 0;
+            const qLabel = this.getQLabel(q);
 
             if (!result[co]) {
-                result[co] = { co, marks: 0 };
+                result[co] = { co, questions: [], marks: 0 };
             }
 
-            if (q._isOrOption) {
-                if (q._analyzeMarks) {
-                    result[co].marks += marks;
-                    totalAnalysisMarks += marks;
-                }
-            } else {
-                result[co].marks += marks;
-                totalAnalysisMarks += marks;
+            if (!result[co].questions.includes(qLabel)) {
+                result[co].questions.push(qLabel);
             }
+            result[co].marks += marks;
+            totalAnalysisMarks += marks;
         });
 
         Object.values(result).forEach(entry => {
@@ -149,11 +154,11 @@ const Analysis = {
                 : 0;
         });
 
-        // Sort by CO number
+        // Sort by CO number (CO1, CO2, ...)
         const sorted = {};
         Object.keys(result).sort((a, b) => {
-            const na = parseInt(a.replace('CO', ''));
-            const nb = parseInt(b.replace('CO', ''));
+            const na = parseInt(a.replace(/\D/g, '')) || 0;
+            const nb = parseInt(b.replace(/\D/g, '')) || 0;
             return na - nb;
         }).forEach(k => { sorted[k] = result[k]; });
 
@@ -257,18 +262,21 @@ const Analysis = {
             html += `
                 <tr>
                     <td><strong>${entry.co}</strong></td>
+                    <td>${entry.questions && entry.questions.length > 0 ? entry.questions.join(', ') : '-'}</td>
                     <td>${entry.marks}</td>
                     <td>${entry.percentage}%</td>
                 </tr>`;
         });
         tbody.innerHTML = html;
 
-        tfoot.innerHTML = `
-            <tr>
-                <td><strong>Total</strong></td>
-                <td><strong>${coAnalysis.totalMarks}</strong></td>
-                <td><strong>100%</strong></td>
-            </tr>`;
+        if (tfoot) {
+            tfoot.innerHTML = `
+                <tr>
+                    <td colspan="2"><strong>Total</strong></td>
+                    <td><strong>${coAnalysis.totalMarks}</strong></td>
+                    <td><strong>100%</strong></td>
+                </tr>`;
+        }
     },
 
     renderCharts(analysis) {
